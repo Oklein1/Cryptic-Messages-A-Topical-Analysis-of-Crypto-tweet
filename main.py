@@ -15,6 +15,9 @@ DO_DESTEM = True
 DO_LEMMATIZE = True
 REMOVE_SW = True
 
+# Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
+MAX_TWEETS = 1000
+
 
 def nltk_download():
     download('punkt') # Used in nltk text splitting
@@ -37,7 +40,7 @@ def main():
 
     t0 = time()
     t = t0
-    for tokens in get_processed_tweets(DATA_CSV_LOC, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW):
+    for tokens in get_processed_tweets(DATA_CSV_LOC, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW, max_num=MAX_TWEETS):
         tweet = ' '.join(tokens)
         score = vader.polarity_scores(tweet)['compound']
 

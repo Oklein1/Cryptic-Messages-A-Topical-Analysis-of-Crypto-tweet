@@ -1,13 +1,20 @@
 import csv
 import re
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer, WordNetLemmatizer
 
 
 STOP_WORDS_LOC = 'stop_words.txt'
 
 
-def read_stop_words(file_loc=STOP_WORDS_LOC):
+def read_stop_words_file(file_loc=STOP_WORDS_LOC):
     with open(STOP_WORDS_LOC, 'r') as f:
         return f.read().strip().split('\n')
+
+
+def read_stop_words_nltk():
+    return set(stopwords.words('english'))
 
 
 #################################################################
@@ -48,6 +55,24 @@ def filter_tweet_syntax(str):
     if str[0:3] == 'RT ': # retweets begin with 'RT @...'
         str = str[3:]
     return str
+
+
+####################################################################
+######################## GRAMMATICAL FILTERS #######################
+####################################################################
+
+def remove_stopwords(tokens, stop_words):
+    return [token for token in tokens if token not in stop_words]
+
+# Changes words from plural form to singular form
+lemmatizer = WordNetLemmatizer()
+def lemmatize_tokens(tokens):
+    return [lemmatizer.lemmatize(token) for token in tokens]
+
+# Removes stems from words, e.g. 'flying' -> 'fly'
+destemmer = PorterStemmer()
+def destem_tokens(tokens):
+    return [destemmer.stem(token) for token in tokens]
 
 
 ####################################################################

@@ -169,22 +169,25 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
         reader = csv.DictReader(f)
         next(reader) # discard first csv row
         for line in reader:
-            text = line['text']
-            if do_clean:
-                text = clean(text)
-            tokens = word_tokenize(text) if nltk_split else tokenize(text)
-            if do_destem:
-                tokens = destem_tokens(tokens)
-            if do_lemmatize:
-                tokens = lemmatize_tokens(tokens)
-            if remove_sw:
-                tokens = remove_stopwords(tokens, read_stop_words_file())
+            try:
+                text = line['text']
+                if do_clean:
+                    text = clean(text)
+                tokens = word_tokenize(text) if nltk_split else tokenize(text)
+                if do_destem:
+                    tokens = destem_tokens(tokens)
+                if do_lemmatize:
+                    tokens = lemmatize_tokens(tokens)
+                if remove_sw:
+                    tokens = remove_stopwords(tokens, read_stop_words_file())
 
-            # Yield, not a return outside of For loop, so that entire file isnt read into memory
-            num_processed += 1
-            if (num_processed == max_num):
-                return tokens
-            yield tokens
+                # Yield, not a return outside of For loop, so that entire file isnt read into memory
+                num_processed += 1
+                if (num_processed == max_num):
+                    return tokens
+                yield tokens
+            except:
+                pass
 
 
 

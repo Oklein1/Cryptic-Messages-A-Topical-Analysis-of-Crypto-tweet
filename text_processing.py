@@ -7,6 +7,9 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 
 STOP_WORDS_LOC = 'stop_words.txt'
 
+CLEAN_PUNC = False
+CLEAN_EMOJI = False
+
 
 def read_stop_words_file(file_loc=STOP_WORDS_LOC):
     with open(STOP_WORDS_LOC, 'r') as f:
@@ -98,6 +101,10 @@ def clean(str):
     str = filter_links(str)
     str = filter_tweet_syntax(str)
     str = filter_extra_whitespace(str)
+    if CLEAN_PUNC:
+        str = filter_punctuation(str)
+    if CLEAN_EMOJI:
+        str = filter_nonascii(str)
     return str
 
 

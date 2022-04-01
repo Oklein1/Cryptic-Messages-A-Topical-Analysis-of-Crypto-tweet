@@ -28,8 +28,7 @@ def tfidf(word_counts, num_tweets):
         if not word_is_bad(word):
             tf = word_counts[word] / total_words # how many times a word occurs / how many words there are
             df = word_counts[word] # number of times word occurs across all documents.
-            #idf = log10(num_tweets / (df + 1))
-            idf = num_tweets / (df + 1)
+            idf = log10(num_tweets / (df + 1))
             tfidf = tf * idf
             word_scores[word] = tfidf
 

@@ -19,8 +19,8 @@ REMOVE_SW = True
 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
 MAX_TWEETS = 1000
 
-# Print this many of the most 'important' words from each class' TFIDF results
-LEN_TFIDF_SUMM = 10
+# Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
+LEN_TFIDF_SUMM = 2000
 
 
 def nltk_download():
@@ -92,17 +92,32 @@ def main():
     if TESTING:
         pdb.set_trace()
 
-    print("TOP %s WORDS" % LEN_TFIDF_SUMM)
-    print("POSITIVE")
-    for word, score in tfidf(pos_tweet_word_counts, num_pos)[:LEN_TFIDF_SUMM+1]:
-        print('\t%s: %s' % (word, score))
-    print("\nNEGATIVE")
-    for word, score in tfidf(neg_tweet_word_counts, num_pos)[:LEN_TFIDF_SUMM+1]:
-        print('\t%s: %s' % (word, score))
-    print("\nNEUTRAL")
-    for word, score in tfidf(neu_tweet_word_counts, num_pos)[:LEN_TFIDF_SUMM+1]:
-        print('\t%s: %s' % (word, score))
+    outfile_pos = open('tfidf_results_pos.txt', 'w', encoding='utf8')
+    outfile_neg = open('tfidf_results_neg.txt', 'w', encoding='utf8')
+    outfile_neu = open('tfidf_results_neu.txt', 'w', encoding='utf8')
 
+    i = 0
+    for word, score in tfidf(pos_tweet_word_counts, num_pos):
+        outfile_pos.write('%s: %s\n' % (word, score))
+        i += 1
+        if i == LEN_TFIDF_SUMM:
+            break
+    i = 0
+    for word, score in tfidf(neg_tweet_word_counts, num_pos):
+        outfile_neg.write('%s: %s\n' % (word, score))
+        i += 1
+        if i == LEN_TFIDF_SUMM:
+            break
+    i = 0
+    for word, score in tfidf(neu_tweet_word_counts, num_pos):
+        outfile_neu.write('%s: %s\n' % (word, score))
+        i += 1
+        if i == LEN_TFIDF_SUMM:
+            break
+
+    outfile_pos.close()
+    outfile_neg.close()
+    outfile_neu.close()
 
 if __name__ == '__main__':
     main()

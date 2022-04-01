@@ -1,4 +1,5 @@
 import pdb
+from time import time
 from nltk import download, RegexpParser
 from text_processing import get_processed_tweets
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -23,6 +24,7 @@ def nltk_download():
 
 
 def main():
+    print()
     nltk_download()
 
     vader = SentimentIntensityAnalyzer()
@@ -31,6 +33,10 @@ def main():
     num_neu = 0
     num_neg = 0
 
+    print("PROCESSING...", end='', flush=True)
+
+    t0 = time()
+    t = t0
     for tokens in get_processed_tweets(DATA_CSV_LOC, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW):
         tweet = ' '.join(tokens)
         score = vader.polarity_scores(tweet)['compound']
@@ -42,8 +48,22 @@ def main():
         else:
             num_neu += 1
 
+        # Print a . every 5 seconds
+        if time() - t > 5:
+            print('.', end='', flush=True)
+            t = time()
+
         if TESTING:
             pdb.set_trace()
+
+    print("DONE. %ss\n" % round(time() - t0, 2))
+
+    print("CLASS COUNTS")
+    print("Positive Tweets: %s" % num_pos)
+    print("Negative Tweets: %s" % num_neg)
+    print("Neutral Tweets: %s" % num_neu)
+
+    print()
 
 if __name__ == '__main__':
     main()

@@ -170,7 +170,7 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
         next(reader) # discard first csv row
         for line in reader:
             try:
-                text = line['text']
+                text = str(line['text'])
                 if do_clean:
                     text = clean(text)
                 tokens = word_tokenize(text) if nltk_split else tokenize(text)
@@ -187,7 +187,7 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
                     return tokens
                 yield tokens
             except:
-                pass
+                print('ERROR PROCESSING LINE:', line)
 
 
 

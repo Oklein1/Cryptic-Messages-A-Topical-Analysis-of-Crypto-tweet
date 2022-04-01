@@ -98,19 +98,19 @@ def main():
 
     i = 0
     for word, score in tfidf(pos_tweet_word_counts, num_pos):
-        outfile_pos.write('%s: %s\n' % (word, score))
+        outfile_pos.write('%s: %s, %s\n' % (word, score, pos_tweet_word_counts[word]))
         i += 1
         if i == LEN_TFIDF_SUMM:
             break
     i = 0
     for word, score in tfidf(neg_tweet_word_counts, num_pos):
-        outfile_neg.write('%s: %s\n' % (word, score))
+        outfile_neg.write('%s: %s, %s\n' % (word, score, neg_tweet_word_counts[word]))
         i += 1
         if i == LEN_TFIDF_SUMM:
             break
     i = 0
     for word, score in tfidf(neu_tweet_word_counts, num_pos):
-        outfile_neu.write('%s: %s\n' % (word, score))
+        outfile_neu.write('%s: %s, %s\n' % (word, score, neu_tweet_word_counts[word]))
         i += 1
         if i == LEN_TFIDF_SUMM:
             break

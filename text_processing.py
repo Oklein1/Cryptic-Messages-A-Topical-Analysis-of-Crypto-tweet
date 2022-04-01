@@ -156,7 +156,7 @@ def tokenize(str):
     return groups
 
 
-def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True, do_lemmatize=True, remove_stop_words=True, stopwords_loc=STOP_WORDS_LOC):
+def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True, do_lemmatize=True, remove_sw=True, stopwords_loc=STOP_WORDS_LOC):
     with open(csv_loc, 'r', encoding='utf8') as f:
         reader = csv.DictReader(f)
         next(reader) # discard first csv row
@@ -169,8 +169,8 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
                 tokens = destem_tokens(tokens)
             if do_lemmatize:
                 tokens = lemmatize_tokens(tokens)
-            if remove_stop_words and not nltk_split: # nltk split removes stop words
-                tokens = remove_stop_words(tokens)
+            if remove_sw and not nltk_split: # nltk split removes stop words
+                tokens = remove_stopwords(tokens)
 
             # Yield, not a return outside of For loop, so that entire file isnt read into memory
             yield tokens

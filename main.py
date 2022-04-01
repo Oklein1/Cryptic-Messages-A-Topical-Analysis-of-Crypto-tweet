@@ -103,14 +103,19 @@ def main():
     results = [pos_tweet_word_counts, neg_tweet_word_counts, neu_tweet_word_counts]
     docs = [outfile_pos, outfile_neg, outfile_neu]
 
+    sorted_results = []
+    for result in results:
+        sorted_results.append(sorted(result.items(), key=lambda item: item[1], reverse=True))
+
     num_written = 0
     doc = 0
-    for word_scores in tfidf(results, num_pos):
+    for word_scores in sorted_results: #tfidf(results):
         for word, score in word_scores:
-            docs[doc].write('%s: %s, %s\n' % (word, score, results[doc][word]))
-            num_written += 1
-            if num_written == LEN_TFIDF_SUMM:
-                break
+            if not False:
+                docs[doc].write('%s: %s\n' % (word, score))
+                num_written += 1
+                if num_written == LEN_TFIDF_SUMM:
+                    break
         num_written = 0
         doc += 1
 

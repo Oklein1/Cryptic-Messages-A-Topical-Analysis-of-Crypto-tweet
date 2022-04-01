@@ -1,0 +1,2 @@
+nltk==3.7
+vaderSentiment==3.3.2

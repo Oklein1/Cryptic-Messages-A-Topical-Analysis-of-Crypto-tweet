@@ -10,51 +10,62 @@ def read_stop_words(file_loc=STOP_WORDS_LOC):
         return f.read().strip().split('\n')
 
 
+#################################################################
+#################### BASIC CHARACTER FILTERS ####################
+#################################################################
+
 # removes unicode ellipse character from end of truncated tweets
 def filter_ellipse(str):
     return re.sub(r'\u2026', '', str)
 
 def filter_extra_whitespace(str):
-    return re.sub(r'\s+', ' ', str)
+    return re.sub(r'\s+', ' ', str) # Multiple (+) whitespace (\s) characters
 
 # removes all non-ASCII characters, like emojis
 def filter_nonascii(str):
-    return re.sub(r'[^\x00-\x7F]+', '', str)
+    return re.sub(r'[^\x00-\x7F]+', '', str) # Characters not (^) between (-) ASCII code 00 (\x00) and 127 (\x7F)
 
 def filter_numbers(str):
-    return re.sub(r'\d', '', str)
+    return re.sub(r'\d', '', str) # Any number (\d)
 
 def filter_punctuation(str):
-    return re.sub(r'[^\w\s]', '', str) # [^\w\s] = not alphanumeric/emoji and not a space
+    return re.sub(r'[^\w\s]', '', str) # Characters that are not (^) alphanumeric/emoji (\w) or whitespace (\s)
 
+
+################################################################
+#################### TWITTER SYNTAX FILTERS ####################
+################################################################
+
+def filter_hashtags(str):
+    return re.sub(r'#\S+(\s|$)', '', str) # Hashtag followed by 1 or more (+) non-space characters (\S), then space (\s) or (|) end of line ($)
+
+def filter_mentions(str):
+    return re.sub(r'@\S+(?=(\s|$))', '', str) # @, followed by 1 or more (+) non-space characters (\S), then non-matched (?=) space (\s) or (|) end of line ($)
+
+def filter_tweet_syntax(str):
+    str = filter_mentions(str)
+    str = filter_hashtags(str)
+    if str[0:3] == 'RT ': # retweets begin with 'RT @...'
+        str = str[3:]
+    return str
+
+
+####################################################################
+####################### OTHER STRING FILTERS #######################
+####################################################################
 
 def filter_links(str):
-    return re.sub(r'(http|www)\S+(\s|$)', '', str) # 'http' or 'www' followed by characters, then a space or end of line
+    return re.sub(r'(http|www)\S+(\s|$)', '', str) # http or (|) www, followed by 1 or more (+) non-space chars (\S), then space (\s) or (|) end of line ($)
 
 # Removes numbers and any symbols/punctuation surrounding them
 def filter_numbers_symbols(str):
-    return re.sub(r'([^\w\s]+)?\d+([^\w\s]+)?', '', str) # numbers possibly with symbols adjacent
-
+    return re.sub(r'([^\w\s]+)?\d+([^\w\s]+)?', '', str) # 1 or more (+) numbers (\d) maybe (?) surrounded by characters that are not (^) alphanumeric/emoji (\w) or whitespace (\s)
 
 def filter_short_words(str, min_len=3):
     return ' '.join([word for word in str.split() if len(word) >= min_len])
 
 def filter_stop_words(str, stop_words):
     return ' '.join([word for word in str.split() if word not in stop_words])
-
-
-def filter_hashtags(str):
-    return re.sub(r'#\S+(\s|$)', '', str) # '#' followed by characters, then a space or end of line
-
-def filter_mentions(str):
-    return re.sub(r'@\S+(?=(\s|$))', '', str) # '@' followed by characters, then a space or end of line
-
-def filter_tweet_syntax(str):
-    str = filter_mentions(str)
-    str = filter_hashtags(str)
-    if str[0:3] == 'RT ':
-        str = str[3:]
-    return str
 
 
 # Cleans tweet string as is done in:
@@ -68,6 +79,9 @@ def clean(str):
     return str
 
 
+# Tokenization as is done in:
+# "A Complete VADER-Based Sentiment Analysis of Bitcoin (BTC) Tweets during the Era of COVID-19"
+# Given a string, splits it by whitespace into groups of: alphanumeric/emoji, punctuation, or emoticons
 def tokenize(str):
     stop_words = read_stop_words()
 
@@ -76,7 +90,6 @@ def tokenize(str):
     emoticon_chars = '$=@&_*#>:\'\</{})]|%;~-,([+^"'
 
     groups = []
-
     group = ''
     group_type = None
 

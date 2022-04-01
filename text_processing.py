@@ -64,9 +64,6 @@ def filter_numbers_symbols(str):
 def filter_short_words(str, min_len=3):
     return ' '.join([word for word in str.split() if len(word) >= min_len])
 
-def filter_stop_words(str, stop_words):
-    return ' '.join([word for word in str.split() if word not in stop_words])
-
 
 # Cleans tweet string as is done in:
 # "A Complete VADER-Based Sentiment Analysis of Bitcoin (BTC) Tweets during the Era of COVID-19"
@@ -83,8 +80,6 @@ def clean(str):
 # "A Complete VADER-Based Sentiment Analysis of Bitcoin (BTC) Tweets during the Era of COVID-19"
 # Given a string, splits it by whitespace into groups of: alphanumeric/emoji, punctuation, or emoticons
 def tokenize(str):
-    stop_words = read_stop_words()
-
     # Chars will be considered emoticons if they are both
     # in this group and adjacent to something else in this group
     emoticon_chars = '$=@&_*#>:\'\</{})]|%;~-,([+^"'
@@ -122,8 +117,7 @@ def tokenize(str):
                 group += char
             else:
                 # End this group and start a new one
-                if group not in stop_words:
-                    groups.append(group)
+                groups.append(group)
                 if char_type == 'space':
                     group = ''
                     group_type = None
@@ -136,6 +130,8 @@ def tokenize(str):
 
     return groups
 
+def remove_stopwords(tokens, stop_words):
+    return [token for token in tokens if token not in stop_words]
 
 def get_processed_tweets(csv_loc, stop_words_loc=STOP_WORDS_LOC):
     pass

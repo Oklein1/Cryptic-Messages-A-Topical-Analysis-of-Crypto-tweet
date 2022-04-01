@@ -9,7 +9,7 @@ def word_is_bad(word):
     if DISCARD_PUNC and DISCARD_EMOJI:
         regex = r'[^\x00-\x7F]|[^\w]'
     elif DISCARD_PUNC:
-        regex += r'[^\w]'
+        regex = r'[^\w]'
     elif DISCARD_EMOJI:
         regex = r'[^\x00-\x7F]'
     else:

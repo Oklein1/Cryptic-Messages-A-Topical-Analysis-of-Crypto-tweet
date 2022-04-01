@@ -52,6 +52,8 @@ def main():
         tweet = ' '.join(tokens)
         score = vader.polarity_scores(tweet)['compound']
 
+        # Keep track of the total number of each word that's occured in
+        # this class to be used later in TF-IDF
         if score > 0.05:
             num_pos += 1
             for word in tokens:
@@ -92,28 +94,25 @@ def main():
     if TESTING:
         pdb.set_trace()
 
+    # Write summaries of each class' TFIDF results out to a file
+
     outfile_pos = open('tfidf_results_pos.txt', 'w', encoding='utf8')
     outfile_neg = open('tfidf_results_neg.txt', 'w', encoding='utf8')
     outfile_neu = open('tfidf_results_neu.txt', 'w', encoding='utf8')
 
-    i = 0
-    for word, score in tfidf(pos_tweet_word_counts, num_pos):
-        outfile_pos.write('%s: %s, %s\n' % (word, score, pos_tweet_word_counts[word]))
-        i += 1
-        if i == LEN_TFIDF_SUMM:
-            break
-    i = 0
-    for word, score in tfidf(neg_tweet_word_counts, num_pos):
-        outfile_neg.write('%s: %s, %s\n' % (word, score, neg_tweet_word_counts[word]))
-        i += 1
-        if i == LEN_TFIDF_SUMM:
-            break
-    i = 0
-    for word, score in tfidf(neu_tweet_word_counts, num_pos):
-        outfile_neu.write('%s: %s, %s\n' % (word, score, neu_tweet_word_counts[word]))
-        i += 1
-        if i == LEN_TFIDF_SUMM:
-            break
+    results = [pos_tweet_word_counts, neg_tweet_word_counts, neu_tweet_word_counts]
+    docs = [outfile_pos, outfile_neg, outfile_neu]
+
+    num_written = 0
+    doc = 0
+    for word_scores in tfidf(results, num_pos):
+        for word, score in word_scores:
+            docs[doc].write('%s: %s, %s\n' % (word, score, results[doc][word]))
+            num_written += 1
+            if num_written == LEN_TFIDF_SUMM:
+                break
+        num_written = 0
+        doc += 1
 
     outfile_pos.close()
     outfile_neg.close()

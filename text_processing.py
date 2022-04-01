@@ -170,8 +170,8 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
                 tokens = destem_tokens(tokens)
             if do_lemmatize:
                 tokens = lemmatize_tokens(tokens)
-            if remove_sw and not nltk_split: # nltk split removes stop words
-                tokens = remove_stopwords(tokens)
+            if remove_sw:
+                tokens = remove_stopwords(tokens, read_stop_words_file())
 
             # Yield, not a return outside of For loop, so that entire file isnt read into memory
             num_processed += 1

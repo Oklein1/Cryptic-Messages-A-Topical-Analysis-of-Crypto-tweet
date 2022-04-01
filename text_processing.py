@@ -7,9 +7,6 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 
 STOP_WORDS_LOC = 'stop_words.txt'
 
-CLEAN_PUNC = False
-CLEAN_EMOJI = False
-
 
 def read_stop_words_file(file_loc=STOP_WORDS_LOC):
     with open(STOP_WORDS_LOC, 'r') as f:
@@ -37,9 +34,6 @@ def filter_nonascii(str):
 
 def filter_numbers(str):
     return re.sub(r'\d', '', str) # Any number (\d)
-
-def filter_punctuation(str):
-    return re.sub(r'[^\w\s]', '', str) # Characters that are not (^) alphanumeric/emoji (\w) or whitespace (\s)
 
 
 ################################################################
@@ -101,10 +95,6 @@ def clean(str):
     str = filter_links(str)
     str = filter_tweet_syntax(str)
     str = filter_extra_whitespace(str)
-    if CLEAN_PUNC:
-        str = filter_punctuation(str)
-    if CLEAN_EMOJI:
-        str = filter_nonascii(str)
     return str
 
 

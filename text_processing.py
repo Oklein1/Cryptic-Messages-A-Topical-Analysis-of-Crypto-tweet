@@ -180,6 +180,5 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
                 print('ERROR PROCESSING LINE:', line)
 
 
-
 if __name__ == '__main__':
     get_processed_tweets('Bitcoin_tweets.csv')

@@ -1,11 +1,9 @@
-import pdb
 from time import time
-from tfidf import tfidf
-from nltk import download, RegexpParser
+from nltk import download
 from text_processing import get_processed_tweets
+from topic_extraction import tfidf, sorted_count
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-TESTING = False
 
 DATA_CSV_LOC = 'Bitcoin_tweets.csv'
 
@@ -20,7 +18,7 @@ REMOVE_SW = True
 MAX_TWEETS = 1000
 
 # Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
-LEN_TFIDF_SUMM = 2000
+MAX_WRITE = 2000
 
 
 def nltk_download():
@@ -31,7 +29,6 @@ def nltk_download():
 
 
 def main():
-    print()
     nltk_download()
 
     vader = SentimentIntensityAnalyzer()
@@ -40,88 +37,59 @@ def main():
     num_neu = 0
     num_neg = 0
 
-    pos_tweet_word_counts = {}
-    neg_tweet_word_counts = {}
-    neu_tweet_word_counts = {}
+    pos_counts = {}
+    neg_counts = {}
+    neu_counts = {}
 
     print("PROCESSING...", end='', flush=True)
 
     t0 = time()
-    t = t0
     for tokens in get_processed_tweets(DATA_CSV_LOC, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW, max_num=MAX_TWEETS):
-        tweet = ' '.join(tokens)
-        score = vader.polarity_scores(tweet)['compound']
+        score = vader.polarity_scores(' '.join(tokens))['compound']
 
-        # Keep track of the total number of each word that's occured in
-        # this class to be used later in TF-IDF
+        # Keep track of the total number of each word that's occured in this class
         if score > 0.05:
             num_pos += 1
-            for word in tokens:
-                if word in pos_tweet_word_counts:
-                    pos_tweet_word_counts[word] += 1
-                else:
-                    pos_tweet_word_counts[word] = 1
+            for token in tokens:
+                pos_counts[token] = pos_counts[token] + 1 if token in pos_counts else 1
         elif score < -0.05:
             num_neg += 1
-            for word in tokens:
-                if word in neg_tweet_word_counts:
-                    neg_tweet_word_counts[word] += 1
-                else:
-                    neg_tweet_word_counts[word] = 1
+            for token in tokens:
+                neg_counts[token] = neg_counts[token] + 1 if token in neg_counts else 1
         else:
             num_neu += 1
-            for word in tokens:
-                if word in neu_tweet_word_counts:
-                    neu_tweet_word_counts[word] += 1
-                else:
-                    neu_tweet_word_counts[word] = 1
+            for token in tokens:
+                neu_counts[token] = neu_counts[token] + 1 if token in neu_counts else 1
 
-        # Print a . every 5 seconds
-        if time() - t > 5:
-            print('.', end='', flush=True)
-            t = time()
-
+    results = [pos_counts, neg_counts, neu_counts]
 
     print("DONE. %ss" % round(time() - t0, 2))
-
-    print()
-    print("CLASS COUNTS")
     print("Positive Tweets: %s" % num_pos)
     print("Negative Tweets: %s" % num_neg)
-    print("Neutral Tweets: %s" % num_neu)
-    print()
-
-    if TESTING:
-        pdb.set_trace()
+    print("Neutral Tweets: %s\n" % num_neu)
 
     # Write summaries of each class' TFIDF results out to a file
 
     outfile_pos = open('tfidf_results_pos.txt', 'w', encoding='utf8')
     outfile_neg = open('tfidf_results_neg.txt', 'w', encoding='utf8')
     outfile_neu = open('tfidf_results_neu.txt', 'w', encoding='utf8')
-
-    results = [pos_tweet_word_counts, neg_tweet_word_counts, neu_tweet_word_counts]
-    docs = [outfile_pos, outfile_neg, outfile_neu]
-
-    sorted_results = []
-    for result in results:
-        sorted_results.append(sorted(result.items(), key=lambda item: item[1], reverse=True))
+    outfiles = [outfile_pos, outfile_neg, outfile_neu]
 
     num_written = 0
-    doc = 0
-    for word_scores in sorted_results: #tfidf(results):
-        for word, score in word_scores:
-            if not False:
-                docs[doc].write('%s: %s\n' % (word, score))
-                num_written += 1
-                if num_written == LEN_TFIDF_SUMM:
-                    break
+    file = 0
+    for words_scores in sorted_count(results):
+        for token, score in words_scores:
+            outfiles[file].write('%s %s\n' % (token, score))
+            num_written += 1
+            if num_written == MAX_WRITE:
+                break
         num_written = 0
-        doc += 1
+        file += 1
 
     outfile_pos.close()
     outfile_neg.close()
     outfile_neu.close()
+
 
 if __name__ == '__main__':
     main()

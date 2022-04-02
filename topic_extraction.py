@@ -1,4 +1,3 @@
-import re
 from math import log10
 
 DISCARD_PUNC = True
@@ -6,7 +5,7 @@ DISCARD_EMOJI = False
 
 
 # https://towardsdatascience.com/tf-idf-for-document-ranking-from-scratch-in-python-on-real-world-dataset-796d339a4089
-def tfidf(pos_neg_neu_word_counts, num_tweets):
+def tfidf(pos_neg_neu_word_counts):
 
     total_words = [0, 0, 0] # total number of words in each class
     word_counts_all = {} # tracks count of each word encountered across all classes
@@ -29,3 +28,9 @@ def tfidf(pos_neg_neu_word_counts, num_tweets):
             tfidf = tf * idf
             word_scores[word] = tfidf
         yield sorted(word_scores.items(), key=lambda item: item[1], reverse=True)
+
+
+def sorted_count(pos_neg_neu_word_counts):
+    sorted_results = []
+    for word_counts in pos_neg_neu_word_counts:
+        yield sorted(word_counts.items(), key=lambda item: item[1], reverse=True)

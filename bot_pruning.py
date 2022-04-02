@@ -43,7 +43,9 @@ def manually_tag_data(csv_loc):
                 return
 
         tokens = process_tweet(text)
-        outfile.write('%s %s\n' % (tokens, tag))
+        for token in tokens:
+            outfile.write(token + ' ')
+        outfile.write(tag + '\n')
         num_tagged += 1
 
     outfile.close()

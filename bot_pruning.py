@@ -1,9 +1,9 @@
 import pdb
 import csv
 import random
+import pickle
 import itertools
 from text_processing import process_tweet
-import pickle
 from sklearn.naive_bayes import MultinomialNB
 
 
@@ -21,9 +21,12 @@ def predict(tokens):
     padlen = pickle_dict['padlen']
     clf = pickle_dict['clf']
 
+    # Pad tokens list to length that clf expects
     while len(tokens) < padlen:
         tokens.append('')
 
+    # Convert tokens to integers as done in training
+    # and convert token to '' if it hasnt been seen yet
     for i in range(len(tokens)):
         if tokens[i] not in wordmap:
             tokens[i] = ''
@@ -41,6 +44,7 @@ def train():
             tags.append(int(line[-1]))
             tokens_list.append(line[:-1].strip().split())
 
+    # Pad every list of tokens to be the same length
     longest_tokens = 0
     for tokens in tokens_list:
         if longest_tokens < len(tokens):
@@ -49,6 +53,7 @@ def train():
         while len(tokens_list[i]) < longest_tokens:
             tokens_list[i].append('')
 
+    # Convert each unique token into an integer
     wordmap = {}
     current_val = 0
     for i in range(len(tokens_list)):
@@ -64,6 +69,7 @@ def train():
     clf = MultinomialNB()
     clf.fit(tokens_list, tags)
 
+    # Save clf and processing parameters to a pickle object
     pickle_dict = {
         'clf': clf,
         'wordmap': wordmap,
@@ -71,8 +77,6 @@ def train():
     }
     with open(PICKLE_LOC, 'wb') as f:
         f.write(pickle.dumps(pickle_dict))
-
-    predict(tokens_list[3])
 
 
 # Gets a specific line from the CSV. MUCH faster than just iterating through csv until desired line

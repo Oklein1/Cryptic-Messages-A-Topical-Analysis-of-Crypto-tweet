@@ -31,6 +31,5 @@ def tfidf(pos_neg_neu_word_counts):
 
 
 def sorted_count(pos_neg_neu_word_counts):
-    sorted_results = []
     for word_counts in pos_neg_neu_word_counts:
         yield sorted(word_counts.items(), key=lambda item: item[1], reverse=True)

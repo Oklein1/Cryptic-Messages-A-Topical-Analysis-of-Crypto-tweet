@@ -154,6 +154,7 @@ def tokenize(str):
 
 
 def process_tweet(text, do_clean=True, nltk_split=True, do_destem=True, do_lemmatize=True, remove_sw=True, stopwords_loc=STOP_WORDS_LOC, max_num=-1):
+    text = text.lower()
     if do_clean:
         text = clean(text)
     tokens = word_tokenize(text) if nltk_split else tokenize(text)

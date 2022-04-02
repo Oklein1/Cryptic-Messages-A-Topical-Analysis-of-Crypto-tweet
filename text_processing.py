@@ -153,6 +153,19 @@ def tokenize(str):
     return groups
 
 
+def process_tweet(text, do_clean=True, nltk_split=True, do_destem=True, do_lemmatize=True, remove_sw=True, stopwords_loc=STOP_WORDS_LOC, max_num=-1):
+    if do_clean:
+        text = clean(text)
+    tokens = word_tokenize(text) if nltk_split else tokenize(text)
+    if do_destem:
+        tokens = destem_tokens(tokens)
+    if do_lemmatize:
+        tokens = lemmatize_tokens(tokens)
+    if remove_sw:
+        tokens = remove_stopwords(tokens, read_stop_words_file())
+    return tokens
+
+
 def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True, do_lemmatize=True, remove_sw=True, stopwords_loc=STOP_WORDS_LOC, max_num=-1):
     num_processed = 0
     with open(csv_loc, 'r', encoding='utf8') as f:
@@ -161,21 +174,12 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
         for line in reader:
             try:
                 text = str(line['text'])
-                if do_clean:
-                    text = clean(text)
-                tokens = word_tokenize(text) if nltk_split else tokenize(text)
-                if do_destem:
-                    tokens = destem_tokens(tokens)
-                if do_lemmatize:
-                    tokens = lemmatize_tokens(tokens)
-                if remove_sw:
-                    tokens = remove_stopwords(tokens, read_stop_words_file())
+                tokens = process_tweet(text)
 
-                # Yield, not a return outside of For loop, so that entire file isnt read into memory
                 num_processed += 1
                 if (num_processed == max_num):
                     return tokens
-                yield tokens
+                yield tokens # Yield, not a return outside of For loop, so that entire file isnt read into memory
             except:
                 print('ERROR PROCESSING LINE:', line)
 

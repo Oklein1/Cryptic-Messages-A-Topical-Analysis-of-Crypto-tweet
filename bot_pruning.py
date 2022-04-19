@@ -1,5 +1,6 @@
 import pdb
 import csv
+import copy
 import random
 import pickle
 import itertools
@@ -14,25 +15,21 @@ NUM_TO_TAG = 300 # number of lines to manually tag on 1 run of this file
 DATA_CSV_LEN = 414548 # number of lines in data file
 
 
-def predict(tokens):
-    with open(PICKLE_LOC, 'rb') as f:
-        pickle_dict = pickle.loads(f.read())
-    wordmap = pickle_dict['wordmap']
-    padlen = pickle_dict['padlen']
-    clf = pickle_dict['clf']
+def predict(tokens, wordmap, padlen, clf):
+    clf_tokens = copy.deepcopy(tokens)
 
     # Pad tokens list to length that clf expects
-    while len(tokens) < padlen:
-        tokens.append('')
+    while len(clf_tokens) < padlen:
+        clf_tokens.append('')
 
     # Convert tokens to integers as done in training
     # and convert token to '' if it hasnt been seen yet
-    for i in range(len(tokens)):
-        if tokens[i] not in wordmap:
-            tokens[i] = ''
-        tokens[i] = wordmap[tokens[i]]
+    for i in range(len(clf_tokens)):
+        if clf_tokens[i] not in wordmap:
+            clf_tokens[i] = ''
+        clf_tokens[i] = wordmap[clf_tokens[i]]
 
-    return clf.predict([tokens])
+    return clf.predict([clf_tokens])
 
 
 def train():

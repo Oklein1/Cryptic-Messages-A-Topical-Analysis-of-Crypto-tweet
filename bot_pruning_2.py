@@ -25,9 +25,8 @@ pdb.set_trace()
 
 predictions = {}
 
-for username in list(set(df['user_name']))[1:]:
+for username, tweets in df.groupby('user_name'):
     try:
-        tweets = df[(df['user_name'] == username)]
 
         # Years from year account was created to today
         age = datetime.date.today().year - datetime.datetime.strptime(tweets.iloc[0]['user_created'], r"%Y-%m-%d %H:%M:%S").year

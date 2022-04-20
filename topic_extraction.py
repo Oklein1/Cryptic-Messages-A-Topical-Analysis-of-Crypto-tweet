@@ -1,35 +1,57 @@
-from math import log10
+# # https://towardsdatascience.com/tf-idf-for-document-ranking-from-scratch-in-python-on-real-world-dataset-796d339a4089
+# def tfidf(pos_neg_neu_word_counts):
+#
+#     total_words = [0, 0, 0] # total number of words in each class
+#     word_counts_all = {} # tracks count of each word encountered across all classes
+#     for i in (0, 1, 2):
+#         word_counts = pos_neg_neu_word_counts[i]
+#         for word in word_counts.keys():
+#             total_words[i] += word_counts[word]
+#             if word in word_counts_all:
+#                 word_counts_all[word] += word_counts[word]
+#             else:
+#                 word_counts_all[word] = word_counts[word]
+#
+#     for i in (0, 1, 2):
+#         word_scores = {}
+#         word_counts = pos_neg_neu_word_counts[i]
+#         for word in word_counts.keys():
+#             tf = word_counts[word] / total_words[i] # how many times a word occurs in a doc / how many words there are total in that doc
+#             df = word_counts_all[word] # number of times word occurs across all documents.
+#             idf = log10(4 / df) + 1 # 4 = number of docs + 1. https://programminghistorian.org/en/lessons/analyzing-documents-with-tfidf
+#             tfidf = tf * idf
+#             word_scores[word] = tfidf
+#         yield sorted(word_scores.items(), key=lambda item: item[1], reverse=True)
+#
+#
+# def sorted_count(pos_neg_neu_word_counts):
+#     for word_counts in pos_neg_neu_word_counts:
+#         yield sorted(word_counts.items(), key=lambda item: item[1], reverse=True)
 
-DISCARD_PUNC = True
-DISCARD_EMOJI = False
+def sorted_count(df):
 
+    tokens_pos, tokens_neg, tokens_neu, tokens_bot = {}, {}, {}, {}
+    bots = df[(df['is_bot'] == 1)]
+    humans = df[~(df['is_bot'] == 1)]
 
-# https://towardsdatascience.com/tf-idf-for-document-ranking-from-scratch-in-python-on-real-world-dataset-796d339a4089
-def tfidf(pos_neg_neu_word_counts):
+    # Count occurences of each token in each class
+    for tokens in bots['tokens']:
+        tokens_bot.update(count_tokens(tokens))
+    for tokens in humans[(humans['class'] == 1)]['tokens']:
+        tokens_pos.update(count_tokens(tokens))
+    for tokens in humans[(humans['class'] == -1)]['tokens']:
+        tokens_neg.update(count_tokens(tokens))
+    for tokens in humans[(humans['class'] == 0)]['tokens']:
+        tokens_neu.update(count_tokens(tokens))
 
-    total_words = [0, 0, 0] # total number of words in each class
-    word_counts_all = {} # tracks count of each word encountered across all classes
-    for i in (0, 1, 2):
-        word_counts = pos_neg_neu_word_counts[i]
-        for word in word_counts.keys():
-            total_words[i] += word_counts[word]
-            if word in word_counts_all:
-                word_counts_all[word] += word_counts[word]
-            else:
-                word_counts_all[word] = word_counts[word]
+    # Sort each count dictionary
+    result = [tokens_pos, tokens_neg, tokens_neu, tokens_bot]
+    result = [sorted(result[i].items(), key=lambda item: item[1], reverse=True) for i in range(len(result))]
 
-    for i in (0, 1, 2):
-        word_scores = {}
-        word_counts = pos_neg_neu_word_counts[i]
-        for word in word_counts.keys():
-            tf = word_counts[word] / total_words[i] # how many times a word occurs in a doc / how many words there are total in that doc
-            df = word_counts_all[word] # number of times word occurs across all documents.
-            idf = log10(4 / df) + 1 # 4 = number of docs + 1. https://programminghistorian.org/en/lessons/analyzing-documents-with-tfidf
-            tfidf = tf * idf
-            word_scores[word] = tfidf
-        yield sorted(word_scores.items(), key=lambda item: item[1], reverse=True)
+    return result
 
-
-def sorted_count(pos_neg_neu_word_counts):
-    for word_counts in pos_neg_neu_word_counts:
-        yield sorted(word_counts.items(), key=lambda item: item[1], reverse=True)
+def count_tokens(tokens):
+    result = {}
+    for token in tokens:
+        result[token] = result.get(token, 0) + 1
+    return result

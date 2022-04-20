@@ -179,8 +179,8 @@ def get_processed_tweets(csv_loc, do_clean=True, nltk_split=True, do_destem=True
 
                 num_processed += 1
                 if (num_processed == max_num):
-                    return tokens
-                yield tokens # Yield, not a return outside of For loop, so that entire file isnt read into memory
+                    return text, tokens
+                yield text, tokens # Yield, not a return outside of For loop, so that entire file isnt read into memory
             except:
                 print('ERROR PROCESSING LINE:', line)
 

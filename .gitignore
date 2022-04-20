@@ -1,5 +1,6 @@
 *.csv
-tfidf_results_*.txt
+*.pickle
+results/
 tagged_data.txt
 
 # Byte-compiled / optimized / DLL files

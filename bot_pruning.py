@@ -10,7 +10,7 @@ from sklearn.naive_bayes import MultinomialNB
 
 DATA_CSV_LOC = 'Bitcoin_tweets.csv'
 OUTFILE_LOC = 'tagged_data.txt'
-PICKLE_LOC = 'mnb_pickle'
+PICKLE_LOC = 'mnb_pickle.pickle'
 NUM_TO_TAG = 300 # number of lines to manually tag on 1 run of this file
 DATA_CSV_LEN = 414548 # number of lines in data file
 
@@ -29,7 +29,7 @@ def predict(tokens, wordmap, padlen, clf):
             clf_tokens[i] = ''
         clf_tokens[i] = wordmap[clf_tokens[i]]
 
-    return clf.predict([clf_tokens])
+    return bool(clf.predict([clf_tokens]))
 
 
 def train():

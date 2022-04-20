@@ -5,6 +5,7 @@ import pandas as pd
 from time import time
 from nltk import download
 from string import punctuation
+from plots import plot_2d_vader_classes
 from bot_pruning import predict, PICKLE_LOC
 from text_processing import process_tweet
 from topic_extraction import sorted_count
@@ -21,7 +22,7 @@ DO_LEMMATIZE = True
 REMOVE_SW = True
 
 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
-MAX_TWEETS = 1000
+MAX_TWEETS = 10000
 
 # Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
 MAX_WRITE = 2000
@@ -95,7 +96,7 @@ def main():
                 if (num_processed == MAX_TWEETS):
                     break
 
-                is_bot = user in bot_user_predictions and bot_user_predictions[user]
+                is_bot = bot_user_predictions.get(user, False)
                 scores = vader.polarity_scores(' '.join(tokens))
 
                 vader_class = 0
@@ -108,7 +109,7 @@ def main():
                     'text': [text],
                     'tokens': [tokens],
                     'is_bot': [is_bot],
-                    'vader': [scores],
+                    'vader': [(scores['pos'], scores['neg'], scores['neu'], scores['compound'])],
                     'class': [vader_class]
                 })
                 df = pd.concat([df, row], ignore_index=True)
@@ -118,6 +119,8 @@ def main():
 
     write_tokens(df)
     write_bot_tweets(df)
+
+    plot_2d_vader_classes(df)
 
 
 if __name__ == '__main__':

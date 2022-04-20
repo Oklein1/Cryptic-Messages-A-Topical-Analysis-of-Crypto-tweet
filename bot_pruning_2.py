@@ -32,7 +32,7 @@ for username, tweets in df.groupby('user_name'):
         age = datetime.date.today().year - datetime.datetime.strptime(tweets.iloc[0]['user_created'], r"%Y-%m-%d %H:%M:%S").year
 
         # Reputation of account, where reputation = followers / (followers + following)
-        reputation = tweets.iloc[0]['user_followers'] / (tweets.iloc[0]['user_followers'] + float(tweets.iloc[0]['user_friends']))
+        reputation = float(tweets.iloc[0]['user_followers']) / (float(tweets.iloc[0]['user_followers']) + float(tweets.iloc[0]['user_friends']))
 
         is_verified = tweets.iloc[0]['user_verified'] == 'True'
 

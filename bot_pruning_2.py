@@ -25,8 +25,10 @@ pdb.set_trace()
 
 predictions = {}
 
-for username, tweets in df.groupby('user_name'):
+for username, grp_idx in df.groupby('user_name').groups.items():
     try:
+
+        tweets = df.iloc[grp_idx]
 
         # Years from year account was created to today
         age = datetime.date.today().year - datetime.datetime.strptime(tweets.iloc[0]['user_created'], r"%Y-%m-%d %H:%M:%S").year
@@ -101,7 +103,12 @@ for username, tweets in df.groupby('user_name'):
                     prediction = True
         predictions[username] = prediction
 
-    except:
+    except Exception as e:
+        # Lots of broken lines in this dataset for some reason. e.g.
+        # 137068   *Muhammad Yasir* hello stalker nice to tweet ...  2009-08-31 07:40:42            280.0          623  ...  Twitter for Android    False    NaN        NaN
+        # Maybe accounts that were private when data was colleted?
+        # Most appear to be spam, and almost /all/ of them only have 1-3 tweets.
+        # Regardless, marking as bots so they get pruned in main().
         predictions[username] = True
         print('Error processing user "%s", setting prediction to True.' % username)
 

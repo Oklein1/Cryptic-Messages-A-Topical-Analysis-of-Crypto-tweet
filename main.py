@@ -78,11 +78,9 @@ def main():
 
     vader = SentimentIntensityAnalyzer()
 
-    with open(PICKLE_LOC, 'rb') as f:
-        pickle_dict = pickle.loads(f.read())
-    wordmap = pickle_dict['wordmap']
-    padlen = pickle_dict['padlen']
-    clf = pickle_dict['clf']
+    with open('bot_user_predictions.pickle', 'rb') as f:
+        bot_user_predictions = pickle.loads(f.read())
+
     with open(DATA_CSV_LOC, 'r', encoding='utf8') as f:
         num_processed = 0
         reader = csv.DictReader(f)
@@ -97,7 +95,7 @@ def main():
                 if (num_processed == MAX_TWEETS):
                     break
 
-                is_bot = predict(tokens, wordmap, padlen, clf)
+                is_bot = user in bot_user_predictions and bot_user_predictions[user]
                 scores = vader.polarity_scores(' '.join(tokens))
 
                 vader_class = 0

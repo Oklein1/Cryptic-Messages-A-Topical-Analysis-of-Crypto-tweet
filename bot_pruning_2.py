@@ -15,7 +15,7 @@ TWEET_COUNT_THRESHOLD = 200 # Number of tweets above which might indicate bot.
 LINK_THRESHOLD = 0.9        # Proportion of tweets which contain a url, above which might indicate bot
 AGE_THRESHOLD = 2           # Years from today to year of account creation, younger than which might indicate bot
 TS_STDEV_THRESHOLD = 150000 # Standard deviation of timestamps (in ms), below which might indicate bot (meaning tweets are usually close together in time)
-ENTROPY_THRESHOLD = 0.61    # Entropy of user's tweets, below which might indicate a bot (tweets have consistent content)
+# ENTROPY_THRESHOLD = 0.61    # Entropy of user's tweets, below which might indicate a bot (tweets have consistent content)
 
 FAILED_CHECKS_THRESHOLD = 4 # How many of these checks need to fail to mark a user as a bot
 
@@ -59,18 +59,18 @@ for username in list(set(df['user_name']))[1:]:
         spam_prop = spam_prop / len(tweets)
 
         # Calculate entropy of user's tweets, where entropy is -1 * the summation of (the probability a token occurs in their tweets) * (log_10 of the same probability)
-        num_tokens = 0
-        tweet_token_counts = {}
-        for text in tweets['text']:
-            tokens = process_tweet(text)
-            for token in tokens:
-                tweet_token_counts[token] = tweet_token_counts.get(token, 0) + 1
-                num_tokens += 1
-        tweet_entropy = 0
-        for token in tweet_token_counts.keys():
-            probability = tweet_token_counts[token] / num_tokens
-            tweet_entropy += probability * log10(probability)
-        tweet_entropy = -tweet_entropy
+        # num_tokens = 0
+        # tweet_token_counts = {}
+        # for text in tweets['text']:
+        #     tokens = process_tweet(text)
+        #     for token in tokens:
+        #         tweet_token_counts[token] = tweet_token_counts.get(token, 0) + 1
+        #         num_tokens += 1
+        # tweet_entropy = 0
+        # for token in tweet_token_counts.keys():
+        #     probability = tweet_token_counts[token] / num_tokens
+        #     tweet_entropy += probability * log10(probability)
+        # tweet_entropy = -tweet_entropy
 
         # Count ratio of user's tweets which contain links
         num_tweets_with_links = ['http' in text for text in tweets['text']]
@@ -96,8 +96,8 @@ for username in list(set(df['user_name']))[1:]:
                     num_failed_checks += 1
                 if timestamp_std < TS_STDEV_THRESHOLD:
                     num_failed_checks += 1
-                if tweet_entropy < ENTROPY_THRESHOLD:
-                    num_failed_checks += 1
+                # if tweet_entropy < ENTROPY_THRESHOLD:
+                #     num_failed_checks += 1
                 if num_failed_checks > FAILED_CHECKS_THRESHOLD:
                     prediction = True
         predictions[username] = prediction

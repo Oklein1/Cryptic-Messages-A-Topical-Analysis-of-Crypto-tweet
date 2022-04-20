@@ -102,7 +102,7 @@ for username, tweets in df.groupby('user_name'):
         predictions[username] = prediction
 
     except:
-        predictions[username] = False
+        predictions[username] = True
         print('Error processing user "%s", setting prediction to False.' % username)
 
 pdb.set_trace()

@@ -1,11 +1,12 @@
 import os
+import csv
 import pickle
 import pandas as pd
 from time import time
 from nltk import download
 from string import punctuation
 from bot_pruning import predict, PICKLE_LOC
-from text_processing import get_processed_tweets
+from text_processing import process_tweet
 from topic_extraction import sorted_count
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -82,26 +83,40 @@ def main():
     wordmap = pickle_dict['wordmap']
     padlen = pickle_dict['padlen']
     clf = pickle_dict['clf']
+    with open(DATA_CSV_LOC, 'r', encoding='utf8') as f:
+        num_processed = 0
+        reader = csv.DictReader(f)
+        next(reader) # discard first csv row
+        for line in reader:
+            try:
+                user = line['user_name']
+                text = str(line['text'])
+                tokens = process_tweet(text, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW)
 
-    for text, tokens in get_processed_tweets(DATA_CSV_LOC, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW, max_num=MAX_TWEETS):
+                num_processed += 1
+                if (num_processed == MAX_TWEETS):
+                    break
 
-        is_bot = predict(tokens, wordmap, padlen, clf)
-        scores = vader.polarity_scores(' '.join(tokens))
+                is_bot = predict(tokens, wordmap, padlen, clf)
+                scores = vader.polarity_scores(' '.join(tokens))
 
-        vader_class = 0
-        if scores['compound'] > 0.05:
-            vader_class = 1
-        elif scores['compound'] < -0.05:
-            vader_class = -1
+                vader_class = 0
+                if scores['compound'] > 0.05:
+                    vader_class = 1
+                elif scores['compound'] < -0.05:
+                    vader_class = -1
 
-        row = pd.DataFrame({
-            'text': [text],
-            'tokens': [tokens],
-            'is_bot': [is_bot],
-            'vader': [scores],
-            'class': [vader_class]
-        })
-        df = pd.concat([df, row], ignore_index=True)
+                row = pd.DataFrame({
+                    'text': [text],
+                    'tokens': [tokens],
+                    'is_bot': [is_bot],
+                    'vader': [scores],
+                    'class': [vader_class]
+                })
+                df = pd.concat([df, row], ignore_index=True)
+
+            except:
+                print('ERROR PROCESSING LINE:', line)
 
     write_tokens(df)
     write_bot_tweets(df)

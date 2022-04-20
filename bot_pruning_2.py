@@ -21,7 +21,6 @@ FAILED_CHECKS_THRESHOLD = 4 # How many of these checks need to fail to mark a us
 
 
 df = pd.read_csv('Bitcoin_tweets.csv')
-pdb.set_trace()
 
 predictions = {}
 
@@ -112,8 +111,10 @@ for username, grp_idx in df.groupby('user_name').groups.items():
         predictions[username] = True
         print('Error processing user "%s", setting prediction to True.' % username)
 
-pdb.set_trace()
-
-# write this out to a pickle because it takes forever to run
-with open('bot_user_predictions.pickle', 'wb') as f:
-    f.write(pickle.dumps(predictions))
+try:
+    # write this out to a pickle because it takes forever to run
+    with open('bot_user_predictions.pickle', 'wb') as f:
+        f.write(pickle.dumps(predictions))
+except Exception as e:
+    pdb.set_trace()
+    print(e)

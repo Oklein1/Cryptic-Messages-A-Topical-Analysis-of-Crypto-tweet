@@ -117,6 +117,12 @@ def main():
             except:
                 print('ERROR PROCESSING LINE:', line)
 
+    humans = df[~(df['is_bot'] == 1)]
+    print('Positive Tweets:', len(humans[(humans['class'] == 1)]))
+    print('Negative Tweets:', len(humans[(humans['class'] == -1)]))
+    print('Neutral Tweets:', len(humans[(humans['class'] == 0)]))
+    print('Bot tweets:', len(df[(df['is_bot'] == 1)]))
+
     write_tokens(df)
     write_bot_tweets(df)
 

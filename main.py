@@ -15,12 +15,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 DATA_CSV_LOC = 'Bitcoin_tweets.csv'
 
-# Text processing parameters
-DO_CLEAN = True
-NLTK_SPLIT = True
-DO_DESTEM = True
-DO_LEMMATIZE = True
-REMOVE_SW = True
 
 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
 MAX_TWEETS = 20000
@@ -88,7 +82,7 @@ def main():
     t = time()
     print("Reading csv...", end='')
     if MAX_TWEETS != -1:
-        df = pd.read_csv('Bitcoin_tweets.csv', nrows=MAX_TWEETS)
+        df = pd.read_csv(DATA_CSV_LOC, nrows=MAX_TWEETS)
     else:
         df = pd.read_csv('Bitcoin_tweets.csv')
     ts(t)

@@ -8,6 +8,14 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 STOP_WORDS_LOC = 'stop_words.txt'
 
 
+# Text processing parameters
+DO_CLEAN = True
+NLTK_SPLIT = True
+DO_DESTEM = True
+DO_LEMMATIZE = True
+REMOVE_SW = True
+
+
 def read_stop_words_file():
     with open(STOP_WORDS_LOC, 'r') as f:
         return f.read().strip().split('\n')
@@ -153,7 +161,7 @@ def tokenize(str):
     return groups
 
 
-def process_tweet(text, do_clean=True, nltk_split=True, do_destem=True, do_lemmatize=True, remove_sw=True):
+def process_tweet(text, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW):
     text = text.lower()
     if do_clean:
         text = clean(text)

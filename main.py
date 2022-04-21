@@ -1,5 +1,6 @@
 import os
 import csv
+import pdb
 import pickle
 import pandas as pd
 from time import time
@@ -41,10 +42,6 @@ def init():
         os.mkdir('./results')
 
 
-def is_good_token(token):
-    return token not in punctuation
-
-
 def write_tokens(df):
     file_names = ['results/results_tokens_pos.txt', 'results/results_tokens_neg.txt', 'results/results_tokens_neu.txt', 'results/results_tokens_bot.txt']
     sorted_counts = sorted_count(df)
@@ -52,7 +49,7 @@ def write_tokens(df):
         with open(file_names[i], 'w+', encoding='utf8') as outfile:
             tokens_written = 0
             for token, count in sorted_counts[i]:
-                if is_good_token(token):
+                if token not in punctuation:
                     outfile.write('%s: %s\n' % (token, count))
                     tokens_written += 1
                     if tokens_written == MAX_WRITE:
@@ -65,70 +62,80 @@ def write_bot_tweets(df):
             outfile.write(bot_tweet.replace('\n', '') + '\n')
 
 
+vader = SentimentIntensityAnalyzer()
+def get_vader_scores(tokens):
+    scores = vader.polarity_scores(' '.join(tokens))
+    return ((scores['pos'], scores['neg'], scores['neu'], scores['compound']))
+
+
+def get_vader_class(scores):
+    if scores[-1] > 0.05:
+        return 1
+    if scores[-1] < -0.05:
+        return -1
+    return 0
+
+
+def ts(t):
+    print("Done. %ss" % round(time() - t, 2))
+
+
 def main():
 
     init()
+    print()
 
-    df = pd.DataFrame({
-        'text': [],
-        'tokens': [],
-        'is_bot': [],
-        'vader': [],
-        'class': []
-    })
+    t = time()
+    print("Reading csv...", end='')
+    if MAX_TWEETS != -1:
+        df = pd.read_csv('Bitcoin_tweets.csv', nrows=MAX_TWEETS)
+    else:
+        df = pd.read_csv('Bitcoin_tweets.csv')
+    ts(t)
 
-    vader = SentimentIntensityAnalyzer()
-
+    t = time()
+    print("Reading preprocessed bot users...", end='')
     with open('bot_user_predictions.pickle', 'rb') as f:
         bot_user_predictions = pickle.loads(f.read())
+    ts(t)
 
-    with open(DATA_CSV_LOC, 'r', encoding='utf8') as f:
-        num_processed = 0
-        reader = csv.DictReader(f)
-        next(reader) # discard first csv row
-        for line in reader:
-            try:
-                user = line['user_name']
-                text = str(line['text'])
-                tokens = process_tweet(text, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW)
+    t = time()
+    print("Tokenizing tweets...", end='')
+    df['tokens'] = df['text'].apply(lambda text: process_tweet(text))
+    ts(t)
 
-                is_bot = bot_user_predictions.get(user, False)
-                scores = vader.polarity_scores(' '.join(tokens))
+    t = time()
+    print("Marking bots...", end='')
+    df['is_bot'] = df['user_name'].apply(lambda username: bot_user_predictions.get(username, False))
+    ts(t)
 
-                vader_class = 0
-                if scores['compound'] > 0.05:
-                    vader_class = 1
-                elif scores['compound'] < -0.05:
-                    vader_class = -1
+    t = time()
+    print("Getting VADER scores...", end='')
+    df['vader'] = df['tokens'].apply(lambda tokens: get_vader_scores(tokens))
+    ts(t)
 
-                row = pd.DataFrame({
-                    'text': [text],
-                    'tokens': [tokens],
-                    'is_bot': [is_bot],
-                    'vader': [(scores['pos'], scores['neg'], scores['neu'], scores['compound'])],
-                    'class': [vader_class]
-                })
-                df = pd.concat([df, row], ignore_index=True)
+    t = time()
+    print("Classifying VADER scores...", end='')
+    df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
+    ts(t)
 
-                num_processed += 1
-                if num_processed == MAX_TWEETS:
-                    break
-                if num_processed % 20000 == 0:
-                    print(num_processed)
-
-            except:
-                print('ERROR PROCESSING LINE:', line)
-
+    print('\n'+'#'*50+'\n')
     humans = df[~(df['is_bot'] == 1)]
     print('Positive Tweets:', len(humans[(humans['class'] == 1)]))
     print('Negative Tweets:', len(humans[(humans['class'] == -1)]))
     print('Neutral Tweets:', len(humans[(humans['class'] == 0)]))
     print('Bot tweets:', len(df[(df['is_bot'] == 1)]))
+    print('\n'+'#'*50+'\n')
 
+    t = time()
+    print("Writing outfiles...", end='')
     write_tokens(df)
     write_bot_tweets(df)
+    ts(t)
 
     plot_2d_vader_classes(df)
+
+    print()
 
 
 if __name__ == '__main__':

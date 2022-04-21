@@ -24,6 +24,7 @@ df = pd.read_csv('Bitcoin_tweets.csv')
 
 predictions = {}
 
+num_bad_rows = 0
 for username, grp_idx in df.groupby('user_name').groups.items():
     try:
 
@@ -102,6 +103,9 @@ for username, grp_idx in df.groupby('user_name').groups.items():
                     prediction = True
         predictions[username] = prediction
 
+        if len(predictions) % 1000 == 0:
+            print(len(predictions))
+
     except Exception as e:
         # Lots of broken lines in this dataset for some reason. e.g.
         # 137068   *Muhammad Yasir* hello stalker nice to tweet ...  2009-08-31 07:40:42            280.0          623  ...  Twitter for Android    False    NaN        NaN
@@ -109,7 +113,8 @@ for username, grp_idx in df.groupby('user_name').groups.items():
         # Most appear to be spam, and almost /all/ of them only have 1-3 tweets.
         # Regardless, marking as bots so they get pruned in main().
         predictions[username] = True
-        print('Error processing user "%s", setting prediction to True.' % username)
+        num_bad_rows += 1
+        print('Error processing user "%s", setting prediction to True. %s' % (username, num_bad_rows))
 
 try:
     # write this out to a pickle because it takes forever to run

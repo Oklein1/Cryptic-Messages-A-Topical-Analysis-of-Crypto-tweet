@@ -22,7 +22,7 @@ DO_LEMMATIZE = True
 REMOVE_SW = True
 
 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
-MAX_TWEETS = 10000
+MAX_TWEETS = 20000
 
 # Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
 MAX_WRITE = 2000
@@ -92,10 +92,6 @@ def main():
                 text = str(line['text'])
                 tokens = process_tweet(text, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW)
 
-                num_processed += 1
-                if (num_processed == MAX_TWEETS):
-                    break
-
                 is_bot = bot_user_predictions.get(user, False)
                 scores = vader.polarity_scores(' '.join(tokens))
 
@@ -113,6 +109,12 @@ def main():
                     'class': [vader_class]
                 })
                 df = pd.concat([df, row], ignore_index=True)
+
+                num_processed += 1
+                if num_processed == MAX_TWEETS:
+                    break
+                if num_processed % 20000 == 0:
+                    print(num_processed)
 
             except:
                 print('ERROR PROCESSING LINE:', line)

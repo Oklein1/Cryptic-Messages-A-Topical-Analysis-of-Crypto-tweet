@@ -76,6 +76,7 @@ def ts(t):
 
 def main():
 
+    t0 = time()
     init()
     print()
 
@@ -129,7 +130,8 @@ def main():
 
     plot_2d_vader_classes(df)
 
-    print()
+    print('\n'+'#'*50+'\n')
+    ts(t0)
 
 
 if __name__ == '__main__':

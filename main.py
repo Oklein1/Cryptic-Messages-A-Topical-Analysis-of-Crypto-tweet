@@ -80,7 +80,7 @@ def main():
     print()
 
     t = time()
-    print("Reading csv...", end='')
+    print("Reading csv...", end='', flush=True)
     if MAX_TWEETS != -1:
         df = pd.read_csv(DATA_CSV_LOC, nrows=MAX_TWEETS)
     else:
@@ -88,28 +88,28 @@ def main():
     ts(t)
 
     t = time()
-    print("Reading preprocessed bot users...", end='')
+    print("Reading preprocessed bot users...", end='', flush=True)
     with open('bot_user_predictions.pickle', 'rb') as f:
         bot_user_predictions = pickle.loads(f.read())
     ts(t)
 
     t = time()
-    print("Tokenizing tweets...", end='')
+    print("Tokenizing tweets...", end='', flush=True)
     df['tokens'] = df['text'].apply(lambda text: process_tweet(text))
     ts(t)
 
     t = time()
-    print("Marking bots...", end='')
+    print("Marking bots...", end='', flush=True)
     df['is_bot'] = df['user_name'].apply(lambda username: bot_user_predictions.get(username, False))
     ts(t)
 
     t = time()
-    print("Getting VADER scores...", end='')
+    print("Getting VADER scores...", end='', flush=True)
     df['vader'] = df['tokens'].apply(lambda tokens: get_vader_scores(tokens))
     ts(t)
 
     t = time()
-    print("Classifying VADER scores...", end='')
+    print("Classifying VADER scores...", end='', flush=True)
     df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
     ts(t)
 
@@ -122,7 +122,7 @@ def main():
     print('\n'+'#'*50+'\n')
 
     t = time()
-    print("Writing outfiles...", end='')
+    print("Writing outfiles...", end='', flush=True)
     write_tokens(df)
     write_bot_tweets(df)
     ts(t)

@@ -85,6 +85,6 @@ def plot_2d_vader_classes(df):
     plt.ylabel('Positive VADER Score')
 
     print("Done. Close plot to continue.")
-    plt.savefig('fig.png')
+    plt.savefig('results/fig.png')
     plt.show()
     plt.close()

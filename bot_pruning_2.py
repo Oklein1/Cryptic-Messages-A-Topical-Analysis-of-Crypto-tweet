@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from math import log10
 from main import DATA_CSV_LOC
-from bot_pruning import predict
 from text_processing import process_tweet
 
 

@@ -6,15 +6,19 @@ from nltk import download
 from topic_extraction import lda
 from plots import plot_2d_vader_classes
 from text_processing import process_tweet
+from bot_pruning_2 import make_bot_pickle
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 DATA_CSV_LOC = 'data/covid19_tweets.csv'
+DF_PICKLE_LOC = 'pickles/df.pickle'
 BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 
+WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with tokens, bot marks, vader scores, vader classes) will be pickled. This file can get very large.
+FORCE_REGEN_DF   = True   # If this is true, df pickle will be remade even if it already exists. LDA and outfiles will not be rewritten.
+FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even if it already exists.
 
-MAX_TWEETS = 10000 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
-MAX_WRITE = 2000 # Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
+MAX_TWEETS = 10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
 
 
 # Downloads requirements for NLTK operations used in text processing
@@ -82,39 +86,65 @@ def main():
     init()
     print()
 
-    t = time()
-    print("Reading csv...", end='', flush=True)
-    if MAX_TWEETS != -1:
-        df = pd.read_csv(DATA_CSV_LOC, nrows=MAX_TWEETS)
+    df_made_from_scratch = False
+
+    if not os.path.exists(DF_PICKLE_LOC) or FORCE_REGEN_DF:
+
+        t = time()
+        print("Reading csv...", end='', flush=True)
+        if MAX_TWEETS != -1:
+            df = pd.read_csv(DATA_CSV_LOC, nrows=MAX_TWEETS)
+        else:
+            df = pd.read_csv(DATA_CSV_LOC)
+        ts(t)
+
+        if not os.path.exists(BOT_PICKLE_LOC) or FORCE_REGEN_BOTS:
+            t = time()
+            print("Marking bot users...", end='', flush=True)
+            make_bot_pickle(df, silent=True)
+            ts(t)
+
+        t = time()
+        print("Reading preprocessed bot users...", end='', flush=True)
+        with open(BOT_PICKLE_LOC, 'rb') as f:
+            bot_user_predictions = pickle.loads(f.read())
+        ts(t)
+
+        t = time()
+        print("Tokenizing tweets...", end='', flush=True)
+        df['tokens'] = df['text'].apply(lambda text: process_tweet(text))
+        ts(t)
+
+        t = time()
+        print("Marking bots...", end='', flush=True)
+        df['is_bot'] = df['user_name'].apply(lambda username: bot_user_predictions.get(username, False))
+        ts(t)
+
+        t = time()
+        print("Getting VADER scores...", end='', flush=True)
+        df['vader'] = df['tokens'].apply(lambda tokens: get_vader_scores(tokens))
+        ts(t)
+
+        t = time()
+        print("Classifying VADER scores...", end='', flush=True)
+        df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
+        ts(t)
+
+        df_made_from_scratch = True
+
     else:
-        df = pd.read_csv(DATA_CSV_LOC)
-    ts(t)
+        t = time()
+        print("Reading dataframe pickle...", end='', flush=True)
+        df = pd.read_pickle(DF_PICKLE_LOC)
+        ts(t)
 
-    t = time()
-    print("Reading preprocessed bot users...", end='', flush=True)
-    with open(BOT_PICKLE_LOC, 'rb') as f:
-        bot_user_predictions = pickle.loads(f.read())
-    ts(t)
-
-    t = time()
-    print("Tokenizing tweets...", end='', flush=True)
-    df['tokens'] = df['text'].apply(lambda text: process_tweet(text))
-    ts(t)
-
-    t = time()
-    print("Marking bots...", end='', flush=True)
-    df['is_bot'] = df['user_name'].apply(lambda username: bot_user_predictions.get(username, False))
-    ts(t)
-
-    t = time()
-    print("Getting VADER scores...", end='', flush=True)
-    df['vader'] = df['tokens'].apply(lambda tokens: get_vader_scores(tokens))
-    ts(t)
-
-    t = time()
-    print("Classifying VADER scores...", end='', flush=True)
-    df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
-    ts(t)
+    # df_made_from_scratch check is so pickle isn't read in, then immediately written again
+    if WRITE_DF_PICKLE and df_made_from_scratch:
+        t = time()
+        print("Saving dataframe pickle...", end='', flush=True)
+        df.to_pickle(DF_PICKLE_LOC)
+        ts(t)
+        
 
     t = time()
     print("Running LDA...", end='', flush=True)

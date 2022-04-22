@@ -5,10 +5,9 @@ import datetime
 import numpy as np
 import pandas as pd
 from math import log10
-from main import DATA_CSV_LOC
 from text_processing import process_tweet
 
-
+DATA_CSV_LOC = 'data/covid19_tweets.csv'
 BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 
 SPAM_THRESHOLD = 0.15       # Proportion of user's tweets that need to be marked as spam before considering the whole user spam
@@ -21,9 +20,11 @@ TS_STDEV_THRESHOLD = 150000 # Standard deviation of timestamps (in ms), below wh
 
 FAILED_CHECKS_THRESHOLD = 4 # How many of these checks need to fail to mark a user as a bot
 
-def make_bot_pickle():
+def make_bot_pickle(df=None, silent=False):
 
-    df = pd.read_csv(DATA_CSV_LOC)
+    # df may be passed in by main, so don't read the csv again if that's the case
+    if df is None:
+        df = pd.read_csv(DATA_CSV_LOC)
 
     predictions = {}
 
@@ -106,7 +107,7 @@ def make_bot_pickle():
                         prediction = True
             predictions[username] = prediction
 
-            if len(predictions) % 1000 == 0:
+            if len(predictions) % 1000 == 0 and not silent:
                 print(len(predictions))
 
         except Exception as e:
@@ -117,7 +118,8 @@ def make_bot_pickle():
             # Regardless, marking as bots so they get pruned in main().
             predictions[username] = True
             num_bad_rows += 1
-            print('Error processing user "%s", setting prediction to True. %s' % (username, num_bad_rows))
+            if not silent:
+                print('Error processing user "%s", setting prediction to True. %s' % (username, num_bad_rows))
 
     try:
         # write this out to a pickle because it takes forever to run

@@ -8,7 +8,7 @@ from nltk import download
 from string import punctuation
 from plots import plot_2d_vader_classes
 from text_processing import process_tweet
-from topic_extraction import sorted_count
+from topic_extraction import lda
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
@@ -33,18 +33,22 @@ def init():
         os.mkdir('./results')
 
 
-def write_tokens(df):
-    file_names = ['results/results_tokens_pos.txt', 'results/results_tokens_neg.txt', 'results/results_tokens_neu.txt', 'results/results_tokens_bot.txt']
-    sorted_counts = sorted_count(df)
-    for i in range(len(file_names)):
-        with open(file_names[i], 'w+', encoding='utf8') as outfile:
-            tokens_written = 0
-            for token, count in sorted_counts[i]:
-                if token not in punctuation:
-                    outfile.write('%s: %s\n' % (token, count))
-                    tokens_written += 1
-                    if tokens_written == MAX_WRITE:
-                        break
+def write_tokens_lda(lda_results):
+
+    for vader_class in lda_results:
+
+        vader_class_to_name = {1: 'pos', -1: 'neg', 0: 'neu'}
+        outfile = 'results/results_tokens_lda_%s.txt' % vader_class_to_name[vader_class]
+
+        longest_word_len = max([max([len(word) for word, rating in topic]) for topic in lda_results[vader_class]])
+
+        with open(outfile, 'w', encoding='utf8') as f:
+            for i in range(len(lda_results[vader_class])):
+                f.write('TOPIC %s\n' % i)
+                topic_items = lda_results[vader_class][i]
+                for word, rating in topic_items:
+                    f.write('\t%s %s%%\n' % (word.ljust(longest_word_len, ' '), round(rating, 2)))
+                f.write('\n')
 
 
 def write_bot_tweets(df):
@@ -111,24 +115,27 @@ def main():
     df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
     ts(t)
 
+    t = time()
+    print("Running LDA...", end='', flush=True)
+    lda_results = lda(df)
+    ts(t)
+
+    t = time()
+    print("Writing results...", end='', flush=True)
+    write_tokens_lda(lda_results)
+    write_bot_tweets(df)
+    ts(t)
+
     print('\n'+'#'*50+'\n')
     humans = df[~(df['is_bot'] == 1)]
     print('Positive Tweets:', len(humans[(humans['class'] == 1)]))
     print('Negative Tweets:', len(humans[(humans['class'] == -1)]))
     print('Neutral Tweets:', len(humans[(humans['class'] == 0)]))
     print('Bot tweets:', len(df[(df['is_bot'] == 1)]))
+    ts(t0) # print total runtime timestamp
     print('\n'+'#'*50+'\n')
-
-    t = time()
-    print("Writing outfiles...", end='', flush=True)
-    write_tokens(df)
-    write_bot_tweets(df)
-    ts(t)
 
     plot_2d_vader_classes(df)
-
-    print('\n'+'#'*50+'\n')
-    ts(t0)
 
 
 if __name__ == '__main__':

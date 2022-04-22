@@ -20,11 +20,9 @@ TS_STDEV_THRESHOLD = 150000 # Standard deviation of timestamps (in ms), below wh
 
 FAILED_CHECKS_THRESHOLD = 4 # How many of these checks need to fail to mark a user as a bot
 
-def make_bot_pickle(df=None, silent=False):
+def make_bot_pickle(silent=False):
 
-    # df may be passed in by main, so don't read the csv again if that's the case
-    if df is None:
-        df = pd.read_csv(DATA_CSV_LOC)
+    df = pd.read_csv(DATA_CSV_LOC)
 
     predictions = {}
 

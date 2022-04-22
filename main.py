@@ -101,7 +101,7 @@ def main():
         if not os.path.exists(BOT_PICKLE_LOC) or FORCE_REGEN_BOTS:
             t = time()
             print("Marking bot users...", end='', flush=True)
-            make_bot_pickle(df, silent=True)
+            make_bot_pickle(silent=True)
             ts(t)
 
         t = time()

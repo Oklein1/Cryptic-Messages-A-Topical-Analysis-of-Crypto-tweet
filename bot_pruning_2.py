@@ -5,8 +5,12 @@ import datetime
 import numpy as np
 import pandas as pd
 from math import log10
+from main import DATA_CSV_LOC
 from bot_pruning import predict
 from text_processing import process_tweet
+
+
+BOT_PICKLE_LOC = 'bot_user_predictions_covid.pickle'
 
 
 SPAM_THRESHOLD = 0.15       # Proportion of user's tweets that need to be marked as spam before considering the whole user spam
@@ -20,7 +24,7 @@ TS_STDEV_THRESHOLD = 150000 # Standard deviation of timestamps (in ms), below wh
 FAILED_CHECKS_THRESHOLD = 4 # How many of these checks need to fail to mark a user as a bot
 
 
-df = pd.read_csv('Bitcoin_tweets.csv')
+df = pd.read_csv(DATA_CSV_LOC)
 
 predictions = {}
 
@@ -118,7 +122,7 @@ for username, grp_idx in df.groupby('user_name').groups.items():
 
 try:
     # write this out to a pickle because it takes forever to run
-    with open('bot_user_predictions.pickle', 'wb') as f:
+    with open(BOT_PICKLE_LOC, 'wb') as f:
         f.write(pickle.dumps(predictions))
 except Exception as e:
     pdb.set_trace()

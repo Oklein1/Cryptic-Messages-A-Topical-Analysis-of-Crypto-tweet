@@ -7,20 +7,17 @@ from time import time
 from nltk import download
 from string import punctuation
 from plots import plot_2d_vader_classes
-from bot_pruning import predict, PICKLE_LOC
 from text_processing import process_tweet
 from topic_extraction import sorted_count
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
-DATA_CSV_LOC = 'Bitcoin_tweets.csv'
+DATA_CSV_LOC = 'covid19_tweets.csv'
+BOT_PICKLE_LOC = 'bot_user_predictions_covid.pickle'
 
 
-# Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
-MAX_TWEETS = 20000
-
-# Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
-MAX_WRITE = 2000
+MAX_TWEETS = 10000 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
+MAX_WRITE = 2000 # Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
 
 
 def nltk_download():
@@ -85,12 +82,12 @@ def main():
     if MAX_TWEETS != -1:
         df = pd.read_csv(DATA_CSV_LOC, nrows=MAX_TWEETS)
     else:
-        df = pd.read_csv('Bitcoin_tweets.csv')
+        df = pd.read_csv(DATA_CSV_LOC)
     ts(t)
 
     t = time()
     print("Reading preprocessed bot users...", end='', flush=True)
-    with open('bot_user_predictions.pickle', 'rb') as f:
+    with open(BOT_PICKLE_LOC, 'rb') as f:
         bot_user_predictions = pickle.loads(f.read())
     ts(t)
 

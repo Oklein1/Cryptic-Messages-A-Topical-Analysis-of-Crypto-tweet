@@ -8,7 +8,7 @@ from text_processing import process_tweet
 from sklearn.naive_bayes import MultinomialNB
 
 
-DATA_CSV_LOC = 'Bitcoin_tweets.csv'
+DATA_CSV_LOC = 'covid19_tweets.csv'
 OUTFILE_LOC = 'tagged_data.txt'
 PICKLE_LOC = 'mnb_pickle.pickle'
 NUM_TO_TAG = 300 # number of lines to manually tag on 1 run of this file

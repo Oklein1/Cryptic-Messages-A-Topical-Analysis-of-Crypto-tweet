@@ -162,7 +162,7 @@ def tokenize(str):
 
 
 def process_tweet(text, do_clean=DO_CLEAN, nltk_split=NLTK_SPLIT, do_destem=DO_DESTEM, do_lemmatize=DO_LEMMATIZE, remove_sw=REMOVE_SW):
-    text = text.lower()
+    text = str(text).lower()
     if do_clean:
         text = clean(text)
     tokens = word_tokenize(text) if nltk_split else tokenize(text)

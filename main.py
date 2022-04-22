@@ -32,10 +32,9 @@ def nltk_download():
 # Downloads requirements that don't come with pip install and creates directories main() will use
 def init():
     nltk_download()
-    if not os.path.isdir('./results'):
-        os.mkdir('./results')
-    if not os.path.isdir('./pickles'):
-        os.mkdir('./pickles')
+    for path in ('./results', './pickles', './data'):
+        if not os.path.isdir(path):
+            os.mkdir(path)
 
 
 def write_tokens_lda(lda_results):

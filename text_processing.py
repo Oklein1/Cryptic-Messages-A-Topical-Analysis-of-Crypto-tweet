@@ -1,11 +1,7 @@
-import csv
 import re
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
-
-
-STOP_WORDS_LOC = 'stop_words.txt'
 
 
 # Text processing parameters
@@ -14,6 +10,7 @@ NLTK_SPLIT = True
 DO_DESTEM = True
 DO_LEMMATIZE = True
 REMOVE_SW = True
+STOP_WORDS_LOC = 'stop_words.txt'
 
 
 def read_stop_words_file():

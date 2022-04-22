@@ -1,25 +1,23 @@
 import os
-import csv
-import pdb
 import pickle
 import pandas as pd
 from time import time
 from nltk import download
-from string import punctuation
+from topic_extraction import lda
 from plots import plot_2d_vader_classes
 from text_processing import process_tweet
-from topic_extraction import lda
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
-DATA_CSV_LOC = 'covid19_tweets.csv'
-BOT_PICKLE_LOC = 'bot_user_predictions_covid.pickle'
+DATA_CSV_LOC = 'data/covid19_tweets.csv'
+BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 
 
 MAX_TWEETS = 10000 # Number of tweets to process. Set small for testing, set to -1 to do entire dataset.
 MAX_WRITE = 2000 # Write out this many of the most 'important' words from each class' TFIDF results. -1 for all
 
 
+# Downloads requirements for NLTK operations used in text processing
 def nltk_download():
     download('punkt')       # Used in nltk text splitting
     download('wordnet')     # Used in nltk lemmatizer
@@ -27,10 +25,13 @@ def nltk_download():
     download('stopwords')   # Used in nltk stopword filter
 
 
+# Downloads requirements that don't come with pip install and creates directories main() will use
 def init():
     nltk_download()
     if not os.path.isdir('./results'):
         os.mkdir('./results')
+    if not os.path.isdir('./pickles'):
+        os.mkdir('./pickles')
 
 
 def write_tokens_lda(lda_results):
@@ -45,9 +46,10 @@ def write_tokens_lda(lda_results):
         with open(outfile, 'w', encoding='utf8') as f:
             for i in range(len(lda_results[vader_class])):
                 f.write('TOPIC %s\n' % i)
-                topic_items = lda_results[vader_class][i]
-                for word, rating in topic_items:
-                    f.write('\t%s %s%%\n' % (word.ljust(longest_word_len, ' '), round(rating, 2)))
+                for word, rating in lda_results[vader_class][i]:
+                    word = word.ljust(longest_word_len, ' ')
+                    rating = round(rating, 2)
+                    f.write('\t%s %s%%\n' % (word, rating))
                 f.write('\n')
 
 
@@ -64,11 +66,8 @@ def get_vader_scores(tokens):
 
 
 def get_vader_class(scores):
-    if scores[-1] > 0.05:
-        return 1
-    if scores[-1] < -0.05:
-        return -1
-    return 0
+    compound = scores[3]
+    return 1 if compound > 0.05 else -1 if compound < -0.05 else 0
 
 
 def ts(t):
@@ -77,7 +76,9 @@ def ts(t):
 
 def main():
 
+    # Timestamp used to track total runtime of main()
     t0 = time()
+
     init()
     print()
 

@@ -9,8 +9,7 @@ from main import DATA_CSV_LOC
 from text_processing import process_tweet
 
 
-BOT_PICKLE_LOC = 'bot_user_predictions_covid.pickle'
-
+BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 
 SPAM_THRESHOLD = 0.15       # Proportion of user's tweets that need to be marked as spam before considering the whole user spam
 REPUTATION_THRESHOLD = 0.35 # Reputation below which might indicate bot. Reputation = followers / (followers + following)

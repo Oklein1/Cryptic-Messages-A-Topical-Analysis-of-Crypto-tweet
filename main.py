@@ -11,7 +11,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 DATA_CSV_LOC = 'data/covid19_tweets.csv'
-DF_PICKLE_LOC = 'pickles/df.pickle'
+DF_PICKLE_LOC = 'pickles/df_covid.pickle'
 BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 
 WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with tokens, bot marks, vader scores, vader classes) will be pickled. This file can get very large.

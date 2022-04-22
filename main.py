@@ -14,8 +14,8 @@ DATA_CSV_LOC = 'data/covid19_tweets.csv'
 DF_PICKLE_LOC = 'pickles/df_covid.pickle'
 BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 
-WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with tokens, bot marks, vader scores, vader classes) will be pickled. This file can get very large.
-FORCE_REGEN_DF   = True   # If this is true, df pickle will be remade even if it already exists. LDA and outfiles will not be rewritten.
+WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with data, tokens, bot marks, vader scores, vader classes) will be pickled. This file can get very large.
+FORCE_REGEN_DF   = True   # If this is true, df will be remade even if a pickle of it it already exists. LDA and outfiles will not be rewritten.
 FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even if it already exists.
 
 MAX_TWEETS = 10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.

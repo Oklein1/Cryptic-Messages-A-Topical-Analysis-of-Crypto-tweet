@@ -4,10 +4,11 @@ import pandas as pd
 from time import time
 from nltk import download
 from topic_extraction import lda
-from plots import plot_2d_vader_classes
+from plots import plot_2d_vader_classes, plot_seaborn_kmeans
 from text_processing import process_tweet
 from bot_pruning_2 import make_bot_pickle
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from sklearn.cluster import KMeans
 
 
 DATA_CSV_LOC = 'data/covid19_tweets.csv'
@@ -18,7 +19,7 @@ WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with data, to
 FORCE_REGEN_DF   = True   # If this is true, df will be remade even if a pickle of it it already exists. LDA and outfiles will not be rewritten.
 FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even if it already exists.
 
-MAX_TWEETS = 10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
+MAX_TWEETS = 200 #10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
 
 
 # Downloads requirements for NLTK operations used in text processing
@@ -97,6 +98,7 @@ def main():
             df = pd.read_csv(DATA_CSV_LOC)
         ts(t)
 
+
         if not os.path.exists(BOT_PICKLE_LOC) or FORCE_REGEN_BOTS:
             t = time()
             print("Marking bot users...", end='', flush=True)
@@ -128,13 +130,15 @@ def main():
         print("Classifying VADER scores...", end='', flush=True)
         df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
         ts(t)
+        
+
 
         df_made_from_scratch = True
 
     else:
         t = time()
         print("Reading dataframe pickle...", end='', flush=True)
-        df = pd.read_pickle(DF_PICKLE_LOC)
+        df = pd.read_pickle(DF_PICKLE_LOC) #ACHTUNG HIER#
         ts(t)
 
     # df_made_from_scratch check is so pickle isn't read in, then immediately written again
@@ -143,6 +147,8 @@ def main():
         print("Saving dataframe pickle...", end='', flush=True)
         df.to_pickle(DF_PICKLE_LOC)
         ts(t)
+        
+
         
 
     t = time()
@@ -165,8 +171,23 @@ def main():
     ts(t0) # print total runtime timestamp
     print('\n'+'#'*50+'\n')
 
-    plot_2d_vader_classes(df)
+    #plot_2d_vader_classes(df)
+    
+    ############
+    # PART II: #
+    ############
+    
+    humans['Postive_score'] = df['vader'].apply(lambda x: x[0])
+    humans['Negative_score'] = df['vader'].apply(lambda x: x[1])
 
+    data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out
+    data = data[["user_name", "text", "Postive_score", "Negative_score"]] #filter out
+    
+    kmeans = KMeans(n_clusters=6, #CHOOSE K clusters 
+                    init='k-means++', 
+                    random_state=0).fit(data[["Postive_score","Negative_score"]])
+
+    plot_seaborn_kmeans(df=data, kmeans=kmeans, clusters=6) 
 
 if __name__ == '__main__':
     main()

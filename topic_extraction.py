@@ -29,7 +29,7 @@ def lda(df):
     for vader_class, grp_idx in humans.groupby('class').groups.items():
 
         vectors = vectorizer.fit_transform(df.iloc[grp_idx]['tokens'].apply(lambda tokens: ' '.join(tokens)))
-        feature_names = vectorizer.get_feature_names_out()
+        feature_names = vectorizer.get_feature_names()
         lda.fit_transform(vectors)
 
         topics = [] # list of each topic's words and their ratings in this sentiment class

@@ -1,4 +1,4 @@
-import re
+import re, string
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
@@ -41,6 +41,48 @@ def filter_numbers(str):
     return re.sub(r'\d', '', str) # Any number (\d)
 
 
+
+def remove_html_tags(text):
+    return re.sub('<.*?>', '', text)
+
+def remove_special_char(text):
+    """remove special characters"""
+    return re.sub(r"[^A-Za-z0-9\s]+", " ", text)
+
+def remove_whitespace(text):
+    return re.sub('r[...\n\d{2}$][\n+\d{2}$]',"", text)
+
+def remove_parenthesis(text):
+    """Remove formulas in paragraph"""
+    return re.sub(r'\([^)]*\)', '', text)
+
+# def remove_numeric(text): # USE FILTER NUMBERS
+#     """Remove numerics"""
+#     return re.sub(r'\d+',"", text)
+
+def remove_numbers(text):
+    """Remove Numbers"""
+    return re.sub(r"\b[0-9]+\b\s*","",text)
+
+def remove_char(text):
+    """Remove special charachters.
+        One problem is that people don't 
+        know how to use em- and en-dashes."""
+    return re.sub(r'[#,@,&,—,:,%, ©, ...]'," ",text)
+
+def replace_slash(text):
+    """Replaces slash with whitespace."""
+    return re.sub(r"/", " ", text)
+
+def remove_acronyms(text):
+    """Remove all acronyms"""
+    return re.sub(r'\b[A-Z]{2,}\b',"",text)
+
+def lower_case(text):
+    """Returns lowercase"""
+    return text.lower()
+
+
 ################################################################
 #################### TWITTER SYNTAX FILTERS ####################
 ################################################################
@@ -57,6 +99,40 @@ def filter_tweet_syntax(str):
     if str[0:3] == 'RT ': # retweets begin with 'RT @...'
         str = str[3:]
     return str
+
+def emoji_remover(text):
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                           "]+", flags=re.UNICODE)
+    return emoji_pattern.sub(r'', text)
+
+def remove_hashtag(text):
+    """Removes the hashtag symbol"""
+    return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)"," ",text).split())
+
+def strip_links(text):
+    link_regex    = re.compile('((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)', re.DOTALL)
+    links         = re.findall(link_regex, text)
+    for link in links:
+        text = text.replace(link[0], ', ')    
+    return text
+
+def strip_all_entities(text):
+    """Seperates hashtag symbol from text"""
+    entity_prefixes = ['@','#']
+    for separator in  string.punctuation:
+        if separator not in entity_prefixes :
+            text = text.replace(separator,' ')
+    words = []
+    for word in text.split():
+        word = word.strip()
+        if word:
+            if word[0] not in entity_prefixes:
+                words.append(word)
+    return ' '.join(words)
 
 
 ####################################################################
@@ -101,6 +177,46 @@ def clean(str):
     str = filter_tweet_syntax(str)
     str = filter_extra_whitespace(str)
     return str
+
+
+# ADD NOTES HERE
+##
+def currying(special_char,acronyms, whitespace, numeric, number, parenthesis, char, slash, lower, emoji, url, hashtag, striplink, stripentity):
+    def text_cleaner(x):
+        return whitespace(
+                    char(
+                        special_char(
+                                number(
+                                    numeric(
+                                        parenthesis(
+                                                slash(
+                                                        acronyms(
+                                                            emoji(
+                                                                url(
+                                                                    hashtag(
+                                                                            stripentity(
+                                                                                striplink(lower(x))))))))))))))
+    
+    return text_cleaner
+
+
+# ADD NOTES HERE
+##
+curry_text_cleaner = currying(remove_special_char,
+                     remove_acronyms,
+                     remove_whitespace,
+                     filter_numbers,
+                     remove_numbers,
+                     remove_parenthesis,
+                     remove_char,
+                     replace_slash,
+                     lower_case,
+                     emoji_remover,
+                     filter_links,
+                     remove_hashtag,
+                     strip_links,
+                     strip_all_entities)
+
 
 
 # Tokenization as is done in:

@@ -1,5 +1,6 @@
 from sklearn import decomposition
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cluster import KMeans
 
 LDA_NUM_TOPICS = 10
 NUM_TOP_WORDS = 10
@@ -75,3 +76,10 @@ def count_tokens(tokens):
     for token in tokens:
         result[token] = result.get(token, 0) + 1
     return result
+
+def get_Kmeans_labels(df, clusters):
+    """PART II EXTRACTOR"""
+    kmeans = KMeans(n_clusters=clusters, #CHOOSE K clusters 
+                    init='k-means++', 
+                    random_state=0).fit(df[["Postive_score","Negative_score"]])
+    return kmeans.labels_

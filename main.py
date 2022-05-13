@@ -3,12 +3,12 @@ import pickle
 import pandas as pd
 from time import time
 from nltk import download
-from topic_extraction import lda
+from topic_extraction import lda, get_Kmeans_labels
 from plots import plot_2d_vader_classes, plot_seaborn_kmeans
-from text_processing import process_tweet
+from text_processing import process_tweet, curry_text_cleaner
 from bot_pruning_2 import make_bot_pickle
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from sklearn.cluster import KMeans
+
 
 
 DATA_CSV_LOC = 'data/covid19_tweets.csv'
@@ -18,6 +18,8 @@ BOT_PICKLE_LOC = 'pickles/bot_user_predictions_covid.pickle'
 WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with data, tokens, bot marks, vader scores, vader classes) will be pickled. This file can get very large.
 FORCE_REGEN_DF   = True   # If this is true, df will be remade even if a pickle of it it already exists. LDA and outfiles will not be rewritten.
 FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even if it already exists.
+
+CLUSTERS = 6 ## PART II VARIABLE
 
 MAX_TWEETS = 200 #10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
 
@@ -183,11 +185,13 @@ def main():
     data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out
     data = data[["user_name", "text", "Postive_score", "Negative_score"]] #filter out
     
-    kmeans = KMeans(n_clusters=6, #CHOOSE K clusters 
-                    init='k-means++', 
-                    random_state=0).fit(data[["Postive_score","Negative_score"]])
+    kmeans_fit = get_Kmeans_labels(data, clusters=CLUSTERS) # NEED AS GLOBAL FOR LATER STUFF
 
-    plot_seaborn_kmeans(df=data, kmeans=kmeans, clusters=6) 
+    plot_seaborn_kmeans(data, kmeans=kmeans_fit, clusters=CLUSTERS) 
+    
+    data["Topics"] = data["text"].apply(curry_text_cleaner)
+    
+    print(data.head(5))
 
 if __name__ == '__main__':
     main()

@@ -54,7 +54,7 @@ def topic_extractor_VADERClusters(df, groupbyColumn):
 
 def display_topics(model, features, cluster_number, no_top_words=10):
     storage = []
-    print("\nCluster %02d" % cluster_number,file=open(f"KMeansCluster{cluster_number}_Topics.txt", "a"))
+    print("\nCluster %02d" % cluster_number,file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
     for topic, word_vector in enumerate(model.components_):
         total = word_vector.sum()
         largest = word_vector.argsort()[::-1]
@@ -75,6 +75,7 @@ def topic_extractor_KmeanClusters(df):
         # LDA topic modeling
         num_of_topics = 10 # Set the number of topics you want to extract
         lda = decomposition.LatentDirichletAllocation(n_components=num_of_topics, random_state=42)
+        lda.fit_transform(tf_vectors)
         
             #topics
         display_topics(lda, tf_feature_names, cluster_number=i)

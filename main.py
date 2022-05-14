@@ -189,13 +189,11 @@ def main():
     data["KMeans_label"] = kmeans.labels_
     
     
-    plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS) 
+    #plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS) 
     
     data["tokens"] = data["tokens"].apply(curry_text_cleaner) #I did it on text column
     
-    print(data["tokens"].head())
-    print(type(data["tokens"][0]))
-    
+    print("###################################")
     
     t = time()
     print("Running LDA on Clusters...", end='', flush=True)

@@ -1,3 +1,4 @@
+from pickle import FALSE
 import re, string
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -7,7 +8,7 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 # Text processing parameters
 DO_CLEAN = True
 NLTK_SPLIT = True
-DO_DESTEM = True
+DO_DESTEM = False
 DO_LEMMATIZE = True
 REMOVE_SW = True
 STOP_WORDS_LOC = 'stop_words.txt'
@@ -42,9 +43,6 @@ def filter_numbers(str):
 
 
 
-def remove_html_tags(text):
-    return re.sub('<.*?>', '', text)
-
 def remove_special_char(text):
     """remove special characters"""
     return re.sub(r"[^A-Za-z0-9\s]+", " ", text)
@@ -53,12 +51,9 @@ def remove_whitespace(text):
     return re.sub('r[...\n\d{2}$][\n+\d{2}$]',"", text)
 
 def remove_parenthesis(text):
-    """Remove formulas in paragraph"""
+    """Remove parenthesis and text therein"""
     return re.sub(r'\([^)]*\)', '', text)
 
-# def remove_numeric(text): # USE FILTER NUMBERS
-#     """Remove numerics"""
-#     return re.sub(r'\d+',"", text)
 
 def remove_numbers(text):
     """Remove Numbers"""
@@ -80,7 +75,7 @@ def remove_acronyms(text):
 
 def lower_case(text):
     """Returns lowercase"""
-    return text.lower()
+    return str(text).lower()
 
 
 ################################################################
@@ -109,9 +104,6 @@ def emoji_remover(text):
                            "]+", flags=re.UNICODE)
     return emoji_pattern.sub(r'', text)
 
-def remove_hashtag(text):
-    """Removes the hashtag symbol"""
-    return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)"," ",text).split())
 
 def strip_links(text):
     link_regex    = re.compile('((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)', re.DOTALL)
@@ -121,7 +113,7 @@ def strip_links(text):
     return text
 
 def strip_all_entities(text):
-    """Seperates hashtag symbol from text"""
+    """Removes hashtag, @-symbol and text attached to it"""
     entity_prefixes = ['@','#']
     for separator in  string.punctuation:
         if separator not in entity_prefixes :
@@ -168,6 +160,8 @@ def filter_short_words(str, min_len=3):
     return ' '.join([word for word in str.split() if len(word) >= min_len])
 
 
+
+
 # Cleans tweet string as is done in:
 # "A Complete VADER-Based Sentiment Analysis of Bitcoin (BTC) Tweets during the Era of COVID-19"
 def clean(str):
@@ -181,21 +175,22 @@ def clean(str):
 
 # ADD NOTES HERE
 ##
-def currying(special_char,acronyms, whitespace, numeric, number, parenthesis, char, slash, lower, emoji, url, hashtag, striplink, stripentity):
+def currying(special_char,acronyms, whitespace, numeric, number, parenthesis, char, slash, lower, emoji, hashtag, striplink, stripentity, shortwords):
     def text_cleaner(x):
         return whitespace(
-                    char(
-                        special_char(
+                    shortwords(
+                        char(
+                            special_char(
                                 number(
                                     numeric(
                                         parenthesis(
                                                 slash(
                                                         acronyms(
                                                             emoji(
-                                                                url(
                                                                     hashtag(
                                                                             stripentity(
-                                                                                striplink(lower(x))))))))))))))
+                                                                                striplink(
+                                                                                    lower(x))))))))))))))
     
     return text_cleaner
 
@@ -212,10 +207,11 @@ curry_text_cleaner = currying(remove_special_char,
                      replace_slash,
                      lower_case,
                      emoji_remover,
-                     filter_links,
-                     remove_hashtag,
+                     filter_hashtags,
                      strip_links,
-                     strip_all_entities)
+                     strip_all_entities,
+                     filter_short_words)
+
 
 
 

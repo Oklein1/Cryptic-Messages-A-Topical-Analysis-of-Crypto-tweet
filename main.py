@@ -183,15 +183,26 @@ def main():
     humans['Negative_score'] = df['vader'].apply(lambda x: x[1])
 
     data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out
-    data = data[["user_name", "text", "Postive_score", "Negative_score"]] #filter out
+    data = data[[ "tokens","is_bot"]] #filter out
     
-    kmeans_fit = get_Kmeans_labels(data, clusters=CLUSTERS) # NEED AS GLOBAL FOR LATER STUFF
+    data["KMeans_label"] = get_Kmeans_labels(data, clusters=CLUSTERS) # NEED AS GLOBAL FOR LATER STUFF
+    
+    # data["KMeans_label"] = kmeans_fit.labels_ #MAY NOT NEED
+    #plot_seaborn_kmeans(data, kmeans=kmeans_fit, clusters=CLUSTERS) 
+    
+    data["tokens"] = data["tokens"].apply(curry_text_cleaner) #I did it on text column
+    
+    
+    t = time()
+    print("Running LDA on Clusters...", end='', flush=True)
+    lda_cluster_results = lda(data)
+    ts(t)
+    print(lda_cluster_results)
 
-    plot_seaborn_kmeans(data, kmeans=kmeans_fit, clusters=CLUSTERS) 
-    
-    data["Topics"] = data["text"].apply(curry_text_cleaner)
-    
-    print(data.head(5))
+    # t = time()
+    # print("Writing results...", end='', flush=True)
+    # write_tokens_lda(lda_cluster_results)
+    # ts(t)
 
 if __name__ == '__main__':
     main()

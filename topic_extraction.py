@@ -1,9 +1,13 @@
+from lib2to3.pytree import _Results
 from sklearn import decomposition
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.cluster import KMeans
 
 LDA_NUM_TOPICS = 10
 NUM_TOP_WORDS = 10
+
+
+
 
 
 # Returns results of performing LDA on df['tokens']
@@ -19,14 +23,15 @@ NUM_TOP_WORDS = 10
 # LDA classifies each tweet as belonging to 1 of LDA_NUM_TOPICS possible topics,
 # and the 'rating' of each word in the result represents the probability of a word occuring in a document (a tweet)
 # given that that tweet is part of a given topic.
-def lda(df):
 
+def topic_extractor(df):
+    
     vectorizer = CountVectorizer(max_df=0.95, min_df=3, max_features=5000)
     lda = decomposition.LatentDirichletAllocation(n_components=LDA_NUM_TOPICS, random_state=42)
-
+    
     results = {}
 
-    humans = df[~(df['is_bot'] == 1)]
+    humans = df[~(df['is_bot'] == 1)] #ACHTUN: set i here for cluster loop with condition
     for vader_class, grp_idx in humans.groupby('class').groups.items():
 
         vectors = vectorizer.fit_transform(df.iloc[grp_idx]['tokens'].apply(lambda tokens: ' '.join(tokens)))
@@ -42,8 +47,24 @@ def lda(df):
                 words.append((feature_names[largest[i]], word_vector[largest[i]]*100.0/total))
             topics.append(words)
         results[vader_class] = topics
+        
+        return results
 
-    return results
+
+def lda(df):
+    if not "KMeans_label" in df.columns:
+        return topic_extractor(df)
+    
+    else:
+        cluster_results = {}
+        for i in df['KMeans_label'].unique():
+            KMeans_group = df[df['KMeans_label']== i][["tokens","KMeans_label","is_bot"]]
+            cluster_lda = topic_extractor(KMeans_group)
+            cluster_results[f"cluster{i}"] = cluster_lda
+            
+        return cluster_results
+            
+
 
 
 # Simply counts the number of times each token occurs in bot messages, positive messages, negative messages, and neutral messages.
@@ -77,9 +98,16 @@ def count_tokens(tokens):
         result[token] = result.get(token, 0) + 1
     return result
 
+
+    ############
+    # PART II: #
+    ############
+
 def get_Kmeans_labels(df, clusters):
     """PART II EXTRACTOR"""
     kmeans = KMeans(n_clusters=clusters, #CHOOSE K clusters 
                     init='k-means++', 
                     random_state=0).fit(df[["Postive_score","Negative_score"]])
     return kmeans.labels_
+
+

@@ -21,7 +21,7 @@ FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even
 
 CLUSTERS = 6 ## PART II VARIABLE
 
-MAX_TWEETS = 3000 #10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
+MAX_TWEETS = 20000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
 
 
 # Downloads requirements for NLTK operations used in text processing
@@ -174,7 +174,7 @@ def main():
     ts(t0) # print total runtime timestamp
     print('\n'+'#'*50+'\n')
 
-    #plot_2d_vader_classes(df)
+    plot_2d_vader_classes(df)
     
     ############
     # PART II: #
@@ -184,26 +184,20 @@ def main():
     humans['Negative_score'] = df['vader'].apply(lambda x: x[1])
 
     data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out
-    #data = data[[ "tokens","is_bot"]] #filter out
-    kmeans = get_Kmeans(data, clusters=CLUSTERS) 
+    kmeans = get_Kmeans(data, clusters=CLUSTERS) #kmeans.fit() fits Pos & Neg scores
     data["KMeans_label"] = kmeans.labels_
+    data["tokens"] = data["tokens"].apply(curry_text_cleaner)
     
     
-    #plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS) 
+    plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS)
     
-    data["tokens"] = data["tokens"].apply(curry_text_cleaner) #I did it on text column
-    
-    print("###################################")
     
     t = time()
     print("Running LDA on Clusters...", end='', flush=True)
-    lda(data)
+    lda(data) ## HAS SIDE EFFECT
     ts(t)
 
-    # t = time()
-    # print("Writing results...", end='', flush=True)
-    # write_tokens_lda(lda_cluster_results)
-    # ts(t)
+
 
 if __name__ == '__main__':
     main()

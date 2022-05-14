@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 from time import time
 from nltk import download
-from topic_extraction import lda, get_Kmeans_labels
+from topic_extraction import lda, get_Kmeans
 from plots import plot_2d_vader_classes, plot_seaborn_kmeans
 from text_processing import process_tweet, curry_text_cleaner
 from bot_pruning_2 import make_bot_pickle
@@ -21,7 +21,7 @@ FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even
 
 CLUSTERS = 6 ## PART II VARIABLE
 
-MAX_TWEETS = 200 #10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
+MAX_TWEETS = 3000 #10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
 
 
 # Downloads requirements for NLTK operations used in text processing
@@ -122,6 +122,7 @@ def main():
         print("Marking bots...", end='', flush=True)
         df['is_bot'] = df['user_name'].apply(lambda username: bot_user_predictions.get(username, False))
         ts(t)
+        
 
         t = time()
         print("Getting VADER scores...", end='', flush=True)
@@ -183,21 +184,23 @@ def main():
     humans['Negative_score'] = df['vader'].apply(lambda x: x[1])
 
     data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out
-    data = data[[ "tokens","is_bot"]] #filter out
+    #data = data[[ "tokens","is_bot"]] #filter out
+    kmeans = get_Kmeans(data, clusters=CLUSTERS) 
+    data["KMeans_label"] = kmeans.labels_
     
-    data["KMeans_label"] = get_Kmeans_labels(data, clusters=CLUSTERS) # NEED AS GLOBAL FOR LATER STUFF
     
-    # data["KMeans_label"] = kmeans_fit.labels_ #MAY NOT NEED
-    #plot_seaborn_kmeans(data, kmeans=kmeans_fit, clusters=CLUSTERS) 
+    plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS) 
     
     data["tokens"] = data["tokens"].apply(curry_text_cleaner) #I did it on text column
+    
+    print(data["tokens"].head())
+    print(type(data["tokens"][0]))
     
     
     t = time()
     print("Running LDA on Clusters...", end='', flush=True)
-    lda_cluster_results = lda(data)
+    lda(data)
     ts(t)
-    print(lda_cluster_results)
 
     # t = time()
     # print("Writing results...", end='', flush=True)

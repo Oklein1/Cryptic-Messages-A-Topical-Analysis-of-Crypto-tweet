@@ -95,7 +95,7 @@ def plot_seaborn_kmeans(df, kmeans, clusters):
     """GIVE Description HERE"""
     sns.set_style("darkgrid")
     fig= plt.figure()
-    sns.scatterplot(data=df, x="Negative_score", y="Postive_score", hue=kmeans, palette=sns.color_palette("tab10", clusters))
+    sns.scatterplot(data=df, x="Negative_score", y="Postive_score", hue=kmeans.labels_, palette=sns.color_palette("tab10", clusters))
     #plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], 
     #            marker="X", c="r", s=80, label="centroids")
     plt.legend(bbox_to_anchor=(1,1), loc="upper left", prop={'size': 10})

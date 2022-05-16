@@ -60,13 +60,11 @@ def remove_numbers(text):
     return re.sub(r"\b[0-9]+\b\s*","",text)
 
 def remove_char(text):
-    """Remove special charachters.
-        One problem is that people don't 
-        know how to use em- and en-dashes."""
+    """Remove special characters"""
     return re.sub(r'[#,@,&,—,:,%, ©, ...]'," ",text)
 
 def replace_slash(text):
-    """Replaces slash with whitespace."""
+    """Replaces slash with whitespace"""
     return re.sub(r"/", " ", text)
 
 def remove_acronyms(text):
@@ -106,6 +104,7 @@ def emoji_remover(text):
 
 
 def strip_links(text):
+    """Removes urls from text, then concats them back together"""
     link_regex    = re.compile('((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)', re.DOTALL)
     links         = re.findall(link_regex, text)
     for link in links:
@@ -173,9 +172,12 @@ def clean(str):
     return str
 
 
-# ADD NOTES HERE
-##
-def currying(special_char,acronyms, whitespace, numeric, number, parenthesis, char, slash, lower, emoji, hashtag, striplink, stripentity, shortwords):
+# Curry function is a function nesting other functions.
+# Because Pandas' ".apply()" method takes in a single function as its arg, 
+# currying function allows for the application of multiple functions operating on each row in the df.
+# Additionally, this approach is immutable, never augmenting the original data. 
+
+def currying(special_char, acronyms, whitespace, numeric, number, parenthesis, char, slash, lower, emoji, hashtag, striplink, stripentity, shortwords):
     def text_cleaner(x):
         return whitespace(
                     shortwords(
@@ -195,8 +197,11 @@ def currying(special_char,acronyms, whitespace, numeric, number, parenthesis, ch
     return text_cleaner
 
 
-# ADD NOTES HERE
-##
+# The variable below refers to the currying function and all its initalized args.
+# When curry_text_cleaner is supplied as an arg for data["tokens"].apply(), 
+# pandas will supply each row of the "tokens" column as an argument to the inner function of the currying() function,
+# which is referred to as text_cleaner(x). The argument "x" inside of the inner function text_cleaner will represent
+# each row in the "tokens column." Each of the 14 functions will be applied to the string the row.
 curry_text_cleaner = currying(remove_special_char,
                      remove_acronyms,
                      remove_whitespace,

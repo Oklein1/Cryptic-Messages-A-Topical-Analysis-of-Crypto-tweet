@@ -10,6 +10,25 @@ NUM_TOP_WORDS = 10
 
 
 
+# The control-flow of the lda function goes in one of two directions:
+# either performing LDA on the entire dataset by its compound score, or
+# performing LDA on the clusters created by Kmeans. 
+#
+#
+# Below is a description of each:
+
+def lda(df):
+    if not "KMeans_label" in df.columns:
+        return topic_extractor_VADERClusters(df, "class")
+    
+    else:
+        return topic_extractor_KmeanClusters(df)
+    
+    
+    
+
+# VADER COMPOUND SCORE TOPIC EXTRACTOR:
+# --------------------------------------#
 # Returns results of performing LDA on df['tokens']
 # Results will be of form:
 # {
@@ -52,16 +71,13 @@ def topic_extractor_VADERClusters(df, groupbyColumn):
         return results
 
 
-def display_topics(model, features, cluster_number, no_top_words=10):
-    storage = []
-    print("\nCluster %02d" % cluster_number,file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
-    for topic, word_vector in enumerate(model.components_):
-        total = word_vector.sum()
-        largest = word_vector.argsort()[::-1]
-        print("\nTopic %02d" % topic, file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a")) #
-        for i in range(0, no_top_words):
-            print(" %s (%2.2f)" % (features[largest[i]], word_vector[largest[i]]*100.0/total),file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
-
+# KMEANS CLUSTER TOPIC EXTRACTOR:
+# -------------------------------#
+# 
+# The function below performs the LDA algorithm to each cluster group,
+# then outputs the num_of_topics and stores them in the "results" folder, as text files.
+#
+# _NOTE_: the display_topics function performs side effects to output the files
 
 def topic_extractor_KmeanClusters(df):
     for i in df['KMeans_label'].unique():
@@ -77,21 +93,24 @@ def topic_extractor_KmeanClusters(df):
         lda = decomposition.LatentDirichletAllocation(n_components=num_of_topics, random_state=42)
         lda.fit_transform(tf_vectors)
         
-            #topics
+        # TOPICS DISPLAY & STORE RESULTS IN .TXT FILE
         display_topics(lda, tf_feature_names, cluster_number=i)
         print(f"Cluster {i} is complete. Moving on...")
 
-    return "Topics Extracted and stored in files. Apologies for the side-effect."
+    print("Topics Extracted and stored in results folder.")
     
 
 
-def lda(df):
-    if not "KMeans_label" in df.columns:
-        return topic_extractor_VADERClusters(df, "class")
-    
-    else:
-        return topic_extractor_KmeanClusters(df)
-            
+def display_topics(model, features, cluster_number, no_top_words=10):
+    """The function prints the num_of_topics & stores them in the results folder."""
+    storage = []
+    print("\nCluster %02d" % cluster_number,file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
+    for topic, word_vector in enumerate(model.components_):
+        total = word_vector.sum()
+        largest = word_vector.argsort()[::-1]
+        print("\nTopic %02d" % topic, file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
+        for i in range(0, no_top_words):
+            print(" %s (%2.2f)" % (features[largest[i]], word_vector[largest[i]]*100.0/total),file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
 
 
 
@@ -127,15 +146,11 @@ def count_tokens(tokens):
     return result
 
 
-    ############
-    # PART II: #
-    ############
 
 def get_Kmeans(df, clusters):
-    """PART II EXTRACTOR"""
-    kmeans = KMeans(n_clusters=clusters, #CHOOSE K clusters 
+    kmeans = KMeans(n_clusters=clusters, 
                     init='k-means++', 
-                    random_state=0).fit(df[["Postive_score","Negative_score"]])
+                    random_state=0).fit(df[["Postive_score","Negative_score"]]) #clusters by pos/neg scores
     return kmeans
 
 

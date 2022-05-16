@@ -152,8 +152,6 @@ def main():
         ts(t)
         
 
-        
-
     t = time()
     print("Running LDA...", end='', flush=True)
     lda_results = lda(df)
@@ -180,23 +178,32 @@ def main():
     # PART II: #
     ############
     
+    
+    # Extract pos/neg scores into their own columns for 2 reasons:
+    # 1) to filter out rows with 0 pos or neg scores. These tweets are
+    # typically 1 word like "awesome!," which would have a 0 neg score and a 100% pos score
+    # 2) the get_Kmeans() function uses the pos/neg columns as X & Y axis for clustering.
+    
     humans['Postive_score'] = df['vader'].apply(lambda x: x[0])
     humans['Negative_score'] = df['vader'].apply(lambda x: x[1])
 
-    data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out
-    kmeans = get_Kmeans(data, clusters=CLUSTERS) #kmeans.fit() fits Pos & Neg scores
-    data["KMeans_label"] = kmeans.labels_
-    data["tokens"] = data["tokens"].apply(curry_text_cleaner)
+    data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out noisy data, as described above
+    kmeans = get_Kmeans(data, clusters=CLUSTERS) # Clusters by Pos/Neg columns
+    data["KMeans_label"] = kmeans.labels_ # "_label" refers to an integer representing the cluster group
+    
+    
+    data["tokens"] = data["tokens"].apply(curry_text_cleaner) #applies 14 functions to clean each row of data in df
     
     
     plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS)
     
     
+    # lda function below performs **side-effect** because it contins "KMeans_label" column name.
+    # See topic_extraction.py for further details.
     t = time()
     print("Running LDA on Clusters...", end='', flush=True)
-    lda(data) ## HAS SIDE EFFECT
+    lda(data) 
     ts(t)
-
 
 
 if __name__ == '__main__':

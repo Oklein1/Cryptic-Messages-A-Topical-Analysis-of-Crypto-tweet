@@ -1,10 +1,34 @@
+# from lib2to3.pytree import _Results
 from sklearn import decomposition
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cluster import KMeans
 
 LDA_NUM_TOPICS = 10
 NUM_TOP_WORDS = 10
 
 
+
+
+
+# The control-flow of the lda function goes in one of two directions:
+# either performing LDA on the entire dataset by its compound score, or
+# performing LDA on the clusters created by Kmeans. 
+#
+#
+# Below is a description of each:
+
+def lda(df):
+    if not "KMeans_label" in df.columns:
+        return topic_extractor_VADERClusters(df, "class")
+    
+    else:
+        return topic_extractor_KmeanClusters(df)
+    
+    
+    
+
+# VADER COMPOUND SCORE TOPIC EXTRACTOR:
+# --------------------------------------#
 # Returns results of performing LDA on df['tokens']
 # Results will be of form:
 # {
@@ -18,18 +42,20 @@ NUM_TOP_WORDS = 10
 # LDA classifies each tweet as belonging to 1 of LDA_NUM_TOPICS possible topics,
 # and the 'rating' of each word in the result represents the probability of a word occuring in a document (a tweet)
 # given that that tweet is part of a given topic.
-def lda(df):
 
+def topic_extractor_VADERClusters(df, groupbyColumn):
+    """Used to extract topics when cluster is 3:
+    All positives, all neutrals, all negatives."""
     vectorizer = CountVectorizer(max_df=0.95, min_df=3, max_features=5000)
     lda = decomposition.LatentDirichletAllocation(n_components=LDA_NUM_TOPICS, random_state=42)
-
+    
     results = {}
 
-    humans = df[~(df['is_bot'] == 1)]
-    for vader_class, grp_idx in humans.groupby('class').groups.items():
+    humans = df[~(df['is_bot'] == 1)] #ACHTUN: set i here for cluster loop with condition
+    for vader_class, grp_idx in humans.groupby(groupbyColumn).groups.items(): # CHANGE TO CLUSTERS
 
         vectors = vectorizer.fit_transform(df.iloc[grp_idx]['tokens'].apply(lambda tokens: ' '.join(tokens)))
-        feature_names = vectorizer.get_feature_names_out()
+        feature_names = vectorizer.get_feature_names()
         lda.fit_transform(vectors)
 
         topics = [] # list of each topic's words and their ratings in this sentiment class
@@ -41,8 +67,51 @@ def lda(df):
                 words.append((feature_names[largest[i]], word_vector[largest[i]]*100.0/total))
             topics.append(words)
         results[vader_class] = topics
+        
+        return results
 
-    return results
+
+# KMEANS CLUSTER TOPIC EXTRACTOR:
+# -------------------------------#
+# 
+# The function below performs the LDA algorithm to each cluster group,
+# then outputs the num_of_topics and stores them in the "results" folder, as text files.
+#
+# _NOTE_: the display_topics function performs side effects to output the files
+
+def topic_extractor_KmeanClusters(df):
+    for i in df['KMeans_label'].unique():
+        kmeans_group = df[df['KMeans_label']== i][["tokens","KMeans_label","is_bot"]]
+            
+        #Vectorize
+        vectorizer = CountVectorizer(max_df=0.95, min_df=3, max_features=5000)
+        tf_vectors = vectorizer.fit_transform(kmeans_group['tokens'])
+        tf_feature_names = vectorizer.get_feature_names()
+    
+        # LDA topic modeling
+        num_of_topics = 10 # Set the number of topics you want to extract
+        lda = decomposition.LatentDirichletAllocation(n_components=num_of_topics, random_state=42)
+        lda.fit_transform(tf_vectors)
+        
+        # TOPICS DISPLAY & STORE RESULTS IN .TXT FILE
+        display_topics(lda, tf_feature_names, cluster_number=i)
+        print(f"Cluster {i} is complete. Moving on...")
+
+    print("Topics Extracted and stored in results folder.")
+    
+
+
+def display_topics(model, features, cluster_number, no_top_words=10):
+    """The function prints the num_of_topics & stores them in the results folder."""
+    storage = []
+    print("\nCluster %02d" % cluster_number,file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
+    for topic, word_vector in enumerate(model.components_):
+        total = word_vector.sum()
+        largest = word_vector.argsort()[::-1]
+        print("\nTopic %02d" % topic, file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
+        for i in range(0, no_top_words):
+            print(" %s (%2.2f)" % (features[largest[i]], word_vector[largest[i]]*100.0/total),file=open(f"./results/KMeansCluster{cluster_number}_Topics.txt", "a"))
+
 
 
 # Simply counts the number of times each token occurs in bot messages, positive messages, negative messages, and neutral messages.
@@ -75,3 +144,13 @@ def count_tokens(tokens):
     for token in tokens:
         result[token] = result.get(token, 0) + 1
     return result
+
+
+
+def get_Kmeans(df, clusters):
+    kmeans = KMeans(n_clusters=clusters, 
+                    init='k-means++', 
+                    random_state=0).fit(df[["Postive_score","Negative_score"]]) #clusters by pos/neg scores
+    return kmeans
+
+

@@ -1,4 +1,5 @@
-import re
+from pickle import FALSE
+import re, string
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
@@ -7,7 +8,7 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 # Text processing parameters
 DO_CLEAN = True
 NLTK_SPLIT = True
-DO_DESTEM = True
+DO_DESTEM = False
 DO_LEMMATIZE = True
 REMOVE_SW = True
 STOP_WORDS_LOC = 'stop_words.txt'
@@ -41,6 +42,40 @@ def filter_numbers(str):
     return re.sub(r'\d', '', str) # Any number (\d)
 
 
+
+def remove_special_char(text):
+    """remove special characters"""
+    return re.sub(r"[^A-Za-z0-9\s]+", " ", text)
+
+def remove_whitespace(text):
+    return re.sub('r[...\n\d{2}$][\n+\d{2}$]',"", text)
+
+def remove_parenthesis(text):
+    """Remove parenthesis and text therein"""
+    return re.sub(r'\([^)]*\)', '', text)
+
+
+def remove_numbers(text):
+    """Remove Numbers"""
+    return re.sub(r"\b[0-9]+\b\s*","",text)
+
+def remove_char(text):
+    """Remove special characters"""
+    return re.sub(r'[#,@,&,—,:,%, ©, ...]'," ",text)
+
+def replace_slash(text):
+    """Replaces slash with whitespace"""
+    return re.sub(r"/", " ", text)
+
+def remove_acronyms(text):
+    """Remove all acronyms"""
+    return re.sub(r'\b[A-Z]{2,}\b',"",text)
+
+def lower_case(text):
+    """Returns lowercase"""
+    return str(text).lower()
+
+
 ################################################################
 #################### TWITTER SYNTAX FILTERS ####################
 ################################################################
@@ -57,6 +92,38 @@ def filter_tweet_syntax(str):
     if str[0:3] == 'RT ': # retweets begin with 'RT @...'
         str = str[3:]
     return str
+
+def emoji_remover(text):
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                           "]+", flags=re.UNICODE)
+    return emoji_pattern.sub(r'', text)
+
+
+def strip_links(text):
+    """Removes urls from text, then concats them back together"""
+    link_regex    = re.compile('((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)', re.DOTALL)
+    links         = re.findall(link_regex, text)
+    for link in links:
+        text = text.replace(link[0], ', ')    
+    return text
+
+def strip_all_entities(text):
+    """Removes hashtag, @-symbol and text attached to it"""
+    entity_prefixes = ['@','#']
+    for separator in  string.punctuation:
+        if separator not in entity_prefixes :
+            text = text.replace(separator,' ')
+    words = []
+    for word in text.split():
+        word = word.strip()
+        if word:
+            if word[0] not in entity_prefixes:
+                words.append(word)
+    return ' '.join(words)
 
 
 ####################################################################
@@ -92,6 +159,8 @@ def filter_short_words(str, min_len=3):
     return ' '.join([word for word in str.split() if len(word) >= min_len])
 
 
+
+
 # Cleans tweet string as is done in:
 # "A Complete VADER-Based Sentiment Analysis of Bitcoin (BTC) Tweets during the Era of COVID-19"
 def clean(str):
@@ -101,6 +170,54 @@ def clean(str):
     str = filter_tweet_syntax(str)
     str = filter_extra_whitespace(str)
     return str
+
+
+# Curry function is a function nesting other functions.
+# Because Pandas' ".apply()" method takes in a single function as its arg, 
+# currying function allows for the application of multiple functions operating on each row in the df.
+# Additionally, this approach is immutable, never augmenting the original data. 
+
+def currying(special_char, acronyms, whitespace, numeric, number, parenthesis, char, slash, lower, emoji, hashtag, striplink, stripentity, shortwords):
+    def text_cleaner(x):
+        return whitespace(
+                    shortwords(
+                        char(
+                            special_char(
+                                number(
+                                    numeric(
+                                        parenthesis(
+                                                slash(
+                                                        acronyms(
+                                                            emoji(
+                                                                    hashtag(
+                                                                            stripentity(
+                                                                                striplink(
+                                                                                    lower(x))))))))))))))
+    
+    return text_cleaner
+
+
+# The variable below refers to the currying function and all its initalized args.
+# When curry_text_cleaner is supplied as an arg for data["tokens"].apply(), 
+# pandas will supply each row of the "tokens" column as an argument to the inner function of the currying() function,
+# which is referred to as text_cleaner(x). The argument "x" inside of the inner function text_cleaner will represent
+# each row in the "tokens column." Each of the 14 functions will be applied to the string the row.
+curry_text_cleaner = currying(remove_special_char,
+                     remove_acronyms,
+                     remove_whitespace,
+                     filter_numbers,
+                     remove_numbers,
+                     remove_parenthesis,
+                     remove_char,
+                     replace_slash,
+                     lower_case,
+                     emoji_remover,
+                     filter_hashtags,
+                     strip_links,
+                     strip_all_entities,
+                     filter_short_words)
+
+
 
 
 # Tokenization as is done in:

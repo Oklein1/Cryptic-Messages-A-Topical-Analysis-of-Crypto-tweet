@@ -3,11 +3,12 @@ import pickle
 import pandas as pd
 from time import time
 from nltk import download
-from topic_extraction import lda
-from plots import plot_2d_vader_classes
-from text_processing import process_tweet
+from topic_extraction import lda, get_Kmeans
+from plots import plot_2d_vader_classes, plot_seaborn_kmeans
+from text_processing import process_tweet, curry_text_cleaner
 from bot_pruning_2 import make_bot_pickle
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
 
 
 DATA_CSV_LOC = 'data/covid19_tweets.csv'
@@ -18,7 +19,9 @@ WRITE_DF_PICKLE  = False  # If this is true, the pandas dataframe (with data, to
 FORCE_REGEN_DF   = True   # If this is true, df will be remade even if a pickle of it it already exists. LDA and outfiles will not be rewritten.
 FORCE_REGEN_BOTS = True   # If this is true, bot pickle will be regenerated even if it already exists.
 
-MAX_TWEETS = 10000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
+CLUSTERS = 6 ## PART II VARIABLE
+
+MAX_TWEETS = 20000        # Number of tweets to process. Set small for testing, set to -1 to do entire dataset. If you want to change this, make sure you aren't set to use df pickle.
 
 
 # Downloads requirements for NLTK operations used in text processing
@@ -97,6 +100,7 @@ def main():
             df = pd.read_csv(DATA_CSV_LOC)
         ts(t)
 
+
         if not os.path.exists(BOT_PICKLE_LOC) or FORCE_REGEN_BOTS:
             t = time()
             print("Marking bot users...", end='', flush=True)
@@ -118,6 +122,7 @@ def main():
         print("Marking bots...", end='', flush=True)
         df['is_bot'] = df['user_name'].apply(lambda username: bot_user_predictions.get(username, False))
         ts(t)
+        
 
         t = time()
         print("Getting VADER scores...", end='', flush=True)
@@ -128,13 +133,15 @@ def main():
         print("Classifying VADER scores...", end='', flush=True)
         df['class'] = df['vader'].apply(lambda scores: get_vader_class(scores))
         ts(t)
+        
+
 
         df_made_from_scratch = True
 
     else:
         t = time()
         print("Reading dataframe pickle...", end='', flush=True)
-        df = pd.read_pickle(DF_PICKLE_LOC)
+        df = pd.read_pickle(DF_PICKLE_LOC) #ACHTUNG HIER#
         ts(t)
 
     # df_made_from_scratch check is so pickle isn't read in, then immediately written again
@@ -166,6 +173,37 @@ def main():
     print('\n'+'#'*50+'\n')
 
     plot_2d_vader_classes(df)
+    
+    ############
+    # PART II: #
+    ############
+    
+    
+    # Extract pos/neg scores into their own columns for 2 reasons:
+    # 1) to filter out rows with 0 pos or neg scores. These tweets are
+    # typically 1 word like "awesome!," which would have a 0 neg score and a 100% pos score
+    # 2) the get_Kmeans() function uses the pos/neg columns as X & Y axis for clustering.
+    
+    humans['Postive_score'] = df['vader'].apply(lambda x: x[0])
+    humans['Negative_score'] = df['vader'].apply(lambda x: x[1])
+
+    data = humans[(humans.Postive_score != 0) & (humans.Negative_score != 0)] #filter out noisy data, as described above
+    kmeans = get_Kmeans(data, clusters=CLUSTERS) # Clusters by Pos/Neg columns
+    data["KMeans_label"] = kmeans.labels_ # "_label" refers to an integer representing the cluster group
+    
+    
+    data["tokens"] = data["tokens"].apply(curry_text_cleaner) #applies 14 functions to clean each row of data in df
+    
+    
+    plot_seaborn_kmeans(data, kmeans=kmeans, clusters=CLUSTERS)
+    
+    
+    # lda function below performs **side-effect** because it contins "KMeans_label" column name.
+    # See topic_extraction.py for further details.
+    t = time()
+    print("Running LDA on Clusters...", end='', flush=True)
+    lda(data) 
+    ts(t)
 
 
 if __name__ == '__main__':

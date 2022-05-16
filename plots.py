@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+import seaborn as sns
 
 
 # Uses 3-D KMeans with axes: pos vader score, neg vader score, neu vader score
@@ -88,3 +89,18 @@ def plot_2d_vader_classes(df):
     plt.savefig('results/fig.png')
     plt.show()
     plt.close()
+    
+    
+def plot_seaborn_kmeans(df, kmeans, clusters):
+    """GIVE Description HERE"""
+    sns.set_style("darkgrid")
+    fig= plt.figure()
+    sns.scatterplot(data=df, x="Negative_score", y="Postive_score", hue=kmeans.labels_, palette=sns.color_palette("tab10", clusters))
+    # FOR CENTROIDS:
+    #plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], 
+    #            marker="X", c="r", s=80, label="centroids")
+    plt.legend(bbox_to_anchor=(1,1), loc="upper left", prop={'size': 10})
+    plt.savefig(f"./results/KMeansPlot_Cluster{len(kmeans.labels_)}_Topics.png")
+    plt.show()
+    plt.close()
+    

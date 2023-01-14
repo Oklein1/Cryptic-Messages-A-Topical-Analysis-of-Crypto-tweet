@@ -1,7 +1,7 @@
 # Cryptic Messages: A Topical Analysis of Crypto-tweets
 <br>
 
-by Jacob Finerty & Ofir Klein
+by Ofir Klein & Jacob Finerty 
 
 <br>
 
